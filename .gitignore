@@ -1,0 +1,14 @@
+.idea/
+.vscode/
+*.iml
+
+backend/target/
+backend/data/
+
+frontend/node_modules/
+frontend/dist/
+frontend/android/
+frontend/ios/
+
+*.log
+.DS_Store

@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2ea">
+  <title>带上 · 出门清单</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f2ea;
+      --surface: #fffdf8;
+      --ink: #14221d;
+      --muted: #718078;
+      --line: #dedbd1;
+      --green: #34735b;
+      --green-deep: #245943;
+      --green-soft: #e2eee8;
+      --sand: #ebe8de;
+      --danger: #a3473c;
+      --danger-soft: #f7e7e3;
+      --shadow: 0 8px 30px rgba(30, 48, 40, .06);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: #dfddd5; }
+    body { margin: 0; color: var(--ink); background: #dfddd5; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(52, 115, 91, .28);
+      outline-offset: 2px;
+    }
+    [hidden] { display: none !important; }
+
+    .app-shell {
+      width: min(100%, 430px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--paper);
+      position: relative;
+      overflow-x: hidden;
+      box-shadow: 0 0 50px rgba(24, 38, 32, .08);
+    }
+
+    .screen { min-height: 100dvh; }
+    .home { padding: 27px 17px 48px; }
+    .home-top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { color: var(--green); font-size: 22px; font-weight: 900; letter-spacing: .08em; }
+    .quiet { color: var(--muted); font-size: 13px; }
+    .hero { margin: 44px 2px 25px; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .11em; }
+    .hero h1 { margin: 8px 0 8px; font-size: 31px; line-height: 1.2; letter-spacing: -.045em; }
+    .hero p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .scene-list { display: grid; gap: 12px; }
+    .scene-card {
+      display: grid;
+      grid-template-columns: 1fr 48px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .scene-open {
+      min-height: 104px;
+      padding: 16px 8px 16px 16px;
+      border: 0;
+      background: transparent;
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .scene-open:active { background: #faf8f2; }
+    .scene-mark {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      color: var(--green-deep);
+      background: var(--green-soft);
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .scene-copy { display: grid; gap: 6px; min-width: 0; }
+    .scene-copy strong { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .scene-copy span { color: var(--muted); font-size: 12px; }
+    .scene-copy span b { color: var(--green); font-weight: 800; }
+    .scene-more {
+      min-width: 48px;
+      min-height: 48px;
+      align-self: center;
+      border: 0;
+      border-left: 1px solid rgba(222, 219, 209, .75);
+      background: transparent;
+      color: var(--muted);
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .scene-more:active { background: var(--sand); }
+    .new-scene {
+      width: 100%;
+      min-height: 56px;
+      margin-top: 14px;
+      border: 1px dashed #88aa9b;
+      border-radius: 18px;
+      background: transparent;
+      color: var(--green-deep);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .home-empty { padding: 46px 24px; border: 1px dashed #a9b9b1; border-radius: 20px; text-align: center; }
+    .home-empty strong { display: block; margin-bottom: 7px; }
+    .home-empty span { color: var(--muted); font-size: 13px; }
+
+    .checklist { padding-bottom: 92px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 7;
+      padding: 15px 12px 10px;
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      background: rgba(244, 242, 234, .94);
+      backdrop-filter: blur(15px);
+    }
+    .icon-button {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .icon-button:active { background: var(--sand); }
+    .topbar-title { min-width: 0; text-align: center; }
+    .topbar-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; }
+    .topbar-title span { color: var(--muted); font-size: 11px; }
+
+    .summary { margin: 2px 15px 13px; padding: 18px; border-radius: 20px; background: var(--green-deep); color: white; }
+    .summary-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
+    .summary-count strong { font-size: 32px; line-height: 1; }
+    .summary-count span { opacity: .72; font-size: 14px; }
+    .summary-note { opacity: .72; font-size: 12px; }
+    .progress { height: 5px; margin-top: 14px; border-radius: 999px; background: rgba(255, 255, 255, .19); overflow: hidden; }
+    .progress > i { display: block; width: 0; height: 100%; border-radius: inherit; background: white; transition: width .2s ease; }
+
+    .tools {
+      position: sticky;
+      top: 69px;
+      z-index: 6;
+      padding: 0 15px 11px;
+      background: rgba(244, 242, 234, .96);
+      border-bottom: 1px solid rgba(222, 219, 209, .8);
+    }
+    .filters { display: flex; gap: 7px; margin-bottom: 9px; }
+    .filter-button {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--sand);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .filter-button.is-active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 10px rgba(29, 47, 39, .08); }
+    .section-nav { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; }
+    .section-nav::-webkit-scrollbar { display: none; }
+    .section-chip {
+      flex: 0 0 auto;
+      min-height: 32px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .section-chip b { color: var(--green); }
+
+    .sections { display: grid; gap: 12px; padding: 12px 11px 24px; }
+    .section-card { scroll-margin-top: 154px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); overflow: hidden; }
+    .section-head { min-height: 60px; display: grid; grid-template-columns: 1fr 46px; align-items: center; background: #fbfaf5; }
+    .section-toggle {
+      min-height: 60px;
+      padding: 8px 8px 8px 14px;
+      border: 0;
+      background: transparent;
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+    .chevron { color: var(--muted); font-size: 16px; transform: rotate(90deg); transition: transform .16s ease; }
+    .section-card.is-collapsed .chevron { transform: rotate(0); }
+    .section-title { display: grid; gap: 2px; }
+    .section-title strong { font-size: 15px; }
+    .section-title small { color: var(--muted); font-size: 11px; }
+    .section-title small.complete { color: var(--green); font-weight: 800; }
+    .section-add {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--green-soft);
+      color: var(--green-deep);
+      font-size: 21px;
+      cursor: pointer;
+    }
+    .item-list { border-top: 1px solid var(--line); }
+    .item-row { min-height: 54px; display: grid; grid-template-columns: 1fr 48px; border-bottom: 1px solid var(--line); }
+    .item-row:last-child { border-bottom: 0; }
+    .item-toggle {
+      min-height: 54px;
+      padding: 7px 8px 7px 14px;
+      border: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .check-circle { width: 23px; height: 23px; flex: 0 0 auto; display: grid; place-items: center; border: 1.5px solid #aab5af; border-radius: 50%; color: transparent; font-size: 14px; }
+    .item-toggle.is-checked .check-circle { border-color: var(--green); background: var(--green); color: white; }
+    .item-toggle.is-checked .item-name { color: #87918c; text-decoration: line-through; }
+    .item-name { font-size: 14px; }
+    .item-more { min-width: 48px; min-height: 48px; border: 0; background: transparent; color: #929d97; font-size: 20px; cursor: pointer; }
+    .item-more:active { background: var(--sand); }
+    .empty-state { padding: 45px 24px; text-align: center; color: var(--muted); }
+    .empty-state strong { display: block; margin-bottom: 7px; color: var(--ink); }
+    .empty-section { padding: 20px; color: var(--muted); text-align: center; font-size: 12px; }
+
+    .bottom-bar {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 8;
+      transform: translateX(-50%);
+      width: min(100%, 430px);
+      padding: 10px 15px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(255, 253, 248, .95);
+      backdrop-filter: blur(16px);
+    }
+    .primary-button { width: 100%; min-height: 52px; border: 0; border-radius: 15px; background: var(--green); color: white; font-weight: 900; cursor: pointer; }
+    .primary-button:active { background: var(--green-deep); }
+
+    dialog { max-width: none; max-height: none; border: 0; padding: 0; background: transparent; color: var(--ink); }
+    dialog::backdrop { background: rgba(15, 27, 21, .48); backdrop-filter: blur(2px); }
+    .sheet { width: min(100vw, 430px); margin: auto 0 0; }
+    .sheet[open] { display: grid; align-items: end; min-height: 100dvh; }
+    .sheet-panel { max-height: 88dvh; overflow-y: auto; padding: 22px 17px calc(18px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: var(--surface); box-shadow: 0 -18px 52px rgba(14, 29, 22, .2); }
+    .sheet-handle { width: 42px; height: 4px; margin: -10px auto 18px; border-radius: 999px; background: var(--line); }
+    .sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+    .sheet-head small { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+    .sheet-head h2 { margin: 4px 0 0; font-size: 21px; }
+    .close-button { width: 40px; height: 40px; flex: 0 0 auto; border: 0; border-radius: 12px; background: var(--sand); font-size: 19px; cursor: pointer; }
+    .field { display: grid; gap: 7px; margin-bottom: 14px; }
+    .field label { font-size: 12px; font-weight: 800; }
+    .field input, .field select { width: 100%; min-height: 50px; padding: 0 13px; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); outline: 0; }
+    .field input:focus, .field select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(52, 115, 91, .12); }
+    .form-error { min-height: 20px; color: var(--danger); font-size: 12px; }
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1.45fr; gap: 9px; }
+    .secondary-button, .sheet-primary { min-height: 49px; border-radius: 14px; font-weight: 900; cursor: pointer; }
+    .secondary-button { border: 1px solid var(--line); background: transparent; }
+    .sheet-primary { border: 0; background: var(--green); color: white; }
+    .action-list { display: grid; gap: 8px; }
+    .action-button { width: 100%; min-height: 52px; padding: 0 14px; border: 1px solid var(--line); border-radius: 14px; background: white; text-align: left; font-weight: 800; cursor: pointer; }
+    .action-button:disabled { opacity: .4; cursor: default; }
+    .action-button.danger { color: var(--danger); background: #fffafa; }
+    .action-hint { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+
+    .manage-list { display: grid; gap: 8px; }
+    .manage-row { padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+    .manage-info { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 9px; }
+    .manage-info strong { font-size: 14px; }
+    .manage-info span { color: var(--muted); font-size: 11px; }
+    .manage-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .mini-button { min-height: 38px; border: 0; border-radius: 10px; background: var(--sand); color: var(--green-deep); font-size: 12px; font-weight: 800; cursor: pointer; }
+    .mini-button:disabled { opacity: .35; }
+    .mini-button.danger { color: var(--danger); background: var(--danger-soft); }
+    .add-section { width: 100%; min-height: 48px; margin-top: 11px; border: 1px dashed #88aa9b; border-radius: 13px; background: transparent; color: var(--green-deep); font-weight: 800; cursor: pointer; }
+
+    .confirm { width: min(calc(100vw - 32px), 380px); margin: auto; }
+    .confirm[open] { display: grid; min-height: 100dvh; place-items: center; }
+    .confirm-card { width: 100%; padding: 22px; border-radius: 20px; background: var(--surface); box-shadow: 0 18px 60px rgba(14, 29, 22, .25); }
+    .confirm-card h2 { margin: 0 0 8px; font-size: 20px; }
+    .confirm-card p { margin: 0 0 20px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .confirm-actions { display: grid; grid-template-columns: 1fr 1.25fr; gap: 9px; }
+    .confirm-button { min-height: 48px; border: 0; border-radius: 13px; background: var(--green); color: white; font-weight: 900; cursor: pointer; }
+    .confirm-button.danger { background: var(--danger); }
+
+    .toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      z-index: 30;
+      transform: translateX(-50%);
+      width: min(calc(100% - 32px), 398px);
+      padding: 12px 14px;
+      border-radius: 13px;
+      background: var(--ink);
+      color: white;
+      box-shadow: 0 8px 28px rgba(15, 28, 22, .22);
+      text-align: center;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    .toast.warning { background: #7b4d22; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <main id="home-screen" class="screen home" data-testid="home-screen"></main>
+    <main id="checklist-screen" class="screen checklist" data-testid="checklist-screen" hidden></main>
+  </div>
+
+  <dialog id="form-sheet" class="sheet" aria-labelledby="form-title">
+    <form id="entity-form" class="sheet-panel" method="dialog" novalidate>
+      <div class="sheet-handle"></div>
+      <header class="sheet-head">
+        <div><small id="form-kicker">快速添加</small><h2 id="form-title">新增</h2></div>
+        <button class="close-button" type="button" data-action="close-form" aria-label="关闭">×</button>
+      </header>
+      <div class="field">
+        <label id="name-label" for="name-input">名称</label>
+        <input id="name-input" autocomplete="off" maxlength="40">
+      </div>
+      <div id="section-field" class="field" hidden>
+        <label for="section-select">放入分区</label>
+        <select id="section-select"></select>
+      </div>
+      <div id="form-error" class="form-error" role="alert"></div>
+      <div class="sheet-actions">
+        <button class="secondary-button" type="button" data-action="close-form">取消</button>
+        <button id="form-submit" class="sheet-primary" type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="action-sheet" class="sheet" aria-labelledby="action-title">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <header class="sheet-head">
+        <div><small id="action-kicker">更多操作</small><h2 id="action-title">操作</h2></div>
+        <button class="close-button" type="button" data-action="close-action" aria-label="关闭">×</button>
+      </header>
+      <div id="action-list" class="action-list"></div>
+    </div>
+  </dialog>
+
+  <dialog id="manage-sheet" class="sheet" aria-labelledby="manage-title">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <header class="sheet-head">
+        <div><small>仅在需要整理时使用</small><h2 id="manage-title">管理分区</h2></div>
+        <button class="close-button" type="button" data-action="close-manage" aria-label="关闭">×</button>
+      </header>
+      <div id="manage-list" class="manage-list"></div>
+      <button class="add-section" type="button" data-action="add-section">＋ 新增分区</button>
+    </div>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="confirm" aria-labelledby="confirm-title">
+    <div class="confirm-card">
+      <h2 id="confirm-title">确认操作</h2>
+      <p id="confirm-message"></p>
+      <div class="confirm-actions">
+        <button class="secondary-button" type="button" data-action="cancel-confirm">取消</button>
+        <button id="confirm-button" class="confirm-button" type="button" data-action="confirm">确认</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'bibei.fullPrototype.v1';
+      const VERSION = 1;
+      const $ = selector => document.querySelector(selector);
+      const clone = value => JSON.parse(JSON.stringify(value));
+      const normalize = value => String(value ?? '').trim().toLocaleLowerCase('zh-CN').replace(/\s+/g, '');
+      const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
+
+      function makeItems(prefix, names) {
+        return names.map((name, index) => ({ id: `${prefix}-item-${index + 1}`, name, checked: false, createdAt: '2026-08-21T00:00:00.000Z' }));
+      }
+
+      function makeSection(id, name, items) {
+        return { id, name, items };
+      }
+
+      function createSeedData() {
+        const now = '2026-08-21T00:00:00.000Z';
+        return {
+          version: VERSION,
+          scenes: [
+            {
+              id: 'scene-weekend', name: '周末出游', createdAt: now, updatedAt: now,
+              sections: [
+                makeSection('weekend-important', '重要物品', makeItems('weekend-a', ['手机', '钥匙', '钱包', '身份证', '纸巾'])),
+                makeSection('weekend-digital', '电子设备', makeItems('weekend-b', ['充电宝', '数据线', '耳机', '相机'])),
+                makeSection('weekend-clothes', '衣物', makeItems('weekend-c', ['外套', '备用上衣', '袜子', '帽子'])),
+                makeSection('weekend-other', '其他', makeItems('weekend-d', ['水杯', '雨伞', '防晒霜', '零食', '折叠袋']))
+              ]
+            },
+            {
+              id: 'scene-business', name: '商务出差', createdAt: now, updatedAt: now,
+              sections: [
+                makeSection('business-important', '重要物品', makeItems('business-a', ['手机', '身份证', '钱包', '钥匙', '名片'])),
+                makeSection('business-work', '工作资料', makeItems('business-b', ['笔记本电脑', '电脑充电器', '会议资料', '签字笔', '工作证', '合同文件'])),
+                makeSection('business-digital', '电子设备', makeItems('business-c', ['手机充电器', '充电宝', '耳机', '数据线', '转换插头'])),
+                makeSection('business-clothes', '衣物', makeItems('business-d', ['商务上衣', '西裤', '内衣', '袜子', '备用鞋'])),
+                makeSection('business-wash', '洗护用品', makeItems('business-e', ['牙刷', '牙膏', '剃须刀']))
+              ]
+            },
+            {
+              id: 'scene-long-trip', name: '一周旅行', createdAt: now, updatedAt: now,
+              sections: [
+                makeSection('trip-important', '重要物品', makeItems('trip-a', ['身份证', '手机', '钱包', '钥匙', '车票与行程单', '少量现金'])),
+                makeSection('trip-digital', '电子设备', makeItems('trip-b', ['手机充电器', '充电宝', '耳机', '笔记本电脑', '电脑充电器', '数据线', '转换插头', '相机'])),
+                makeSection('trip-clothes', '衣物', makeItems('trip-c', ['上衣 × 5', '裤子 × 3', '内衣 × 7', '袜子 × 7', '睡衣', '外套', '步行鞋', '拖鞋', '帽子', '轻便雨衣', '脏衣袋'])),
+                makeSection('trip-wash', '洗护用品', makeItems('trip-d', ['牙刷', '牙膏', '洗面奶', '洗发水', '毛巾', '护肤品', '剃须刀'])),
+                makeSection('trip-health', '药品与健康', makeItems('trip-e', ['常用药', '感冒药', '创可贴', '口罩', '纸巾'])),
+                makeSection('trip-other', '其他', makeItems('trip-f', ['雨伞', '水杯', '零食', '书', '折叠购物袋']))
+              ]
+            }
+          ]
+        };
+      }
+
+      function validData(value) {
+        return Boolean(value && value.version === VERSION && Array.isArray(value.scenes) && value.scenes.every(scene =>
+          typeof scene.id === 'string' && typeof scene.name === 'string' && scene.name.trim() && Array.isArray(scene.sections) && scene.sections.length > 0 && scene.sections.every(section =>
+            typeof section.id === 'string' && typeof section.name === 'string' && section.name.trim() && Array.isArray(section.items) && section.items.every(item =>
+              typeof item.id === 'string' && typeof item.name === 'string' && item.name.trim() && typeof item.checked === 'boolean'
+            )
+          )
+        ));
+      }
+
+      function getScene(data, sceneId) {
+        const scene = data.scenes.find(entry => entry.id === sceneId);
+        if (!scene) throw new Error('清单不存在');
+        return scene;
+      }
+
+      function getSection(scene, sectionId) {
+        const section = scene.sections.find(entry => entry.id === sectionId);
+        if (!section) throw new Error('分区不存在');
+        return section;
+      }
+
+      function getItemContext(scene, itemId) {
+        for (const section of scene.sections) {
+          const index = section.items.findIndex(item => item.id === itemId);
+          if (index >= 0) return { section, index, item: section.items[index] };
+        }
+        throw new Error('物品不存在');
+      }
+
+      function stats(scene) {
+        const items = scene.sections.flatMap(section => section.items);
+        return { checked: items.filter(item => item.checked).length, total: items.length, sectionCount: scene.sections.length };
+      }
+
+      function requireName(value, message) {
+        const name = String(value ?? '').trim();
+        if (!name) throw new Error(message);
+        return name;
+      }
+
+      function stamp(scene) { scene.updatedAt = new Date().toISOString(); }
+
+      const Model = {
+        createScene(current, inputName) {
+          const data = clone(current);
+          const name = requireName(inputName, '请输入清单名称');
+          if (data.scenes.some(scene => normalize(scene.name) === normalize(name))) throw new Error('清单名称已存在');
+          const sceneId = uid('scene');
+          const now = new Date().toISOString();
+          data.scenes.push({ id: sceneId, name, createdAt: now, updatedAt: now, sections: [{ id: uid('section'), name: '物品', items: [] }] });
+          return { data, sceneId };
+        },
+        renameScene(current, sceneId, inputName) {
+          const data = clone(current);
+          const scene = getScene(data, sceneId);
+          const name = requireName(inputName, '请输入清单名称');
+          if (data.scenes.some(entry => entry.id !== sceneId && normalize(entry.name) === normalize(name))) throw new Error('清单名称已存在');
+          scene.name = name; stamp(scene); return data;
+        },
+        deleteScene(current, sceneId) {
+          const data = clone(current);
+          if (!data.scenes.some(scene => scene.id === sceneId)) throw new Error('清单不存在');
+          data.scenes = data.scenes.filter(scene => scene.id !== sceneId);
+          return data;
+        },
+        toggleItem(current, sceneId, itemId) {
+          const data = clone(current); const scene = getScene(data, sceneId); const { item } = getItemContext(scene, itemId);
+          item.checked = !item.checked; stamp(scene); return data;
+        },
+        addItem(current, sceneId, inputName, sectionId) {
+          const data = clone(current); const scene = getScene(data, sceneId); const name = requireName(inputName, '请输入物品名称');
+          if (scene.sections.flatMap(section => section.items).some(item => normalize(item.name) === normalize(name))) throw new Error('这个物品已经在清单中');
+          const section = getSection(scene, sectionId); const itemId = uid('item');
+          section.items.push({ id: itemId, name, checked: false, createdAt: new Date().toISOString() }); stamp(scene);
+          return { data, itemId };
+        },
+        renameItem(current, sceneId, itemId, inputName) {
+          const data = clone(current); const scene = getScene(data, sceneId); const { item } = getItemContext(scene, itemId); const name = requireName(inputName, '请输入物品名称');
+          if (scene.sections.flatMap(section => section.items).some(entry => entry.id !== itemId && normalize(entry.name) === normalize(name))) throw new Error('这个物品已经在清单中');
+          item.name = name; stamp(scene); return data;
+        },
+        moveItem(current, sceneId, itemId, targetSectionId) {
+          const data = clone(current); const scene = getScene(data, sceneId); const context = getItemContext(scene, itemId); const target = getSection(scene, targetSectionId);
+          if (context.section.id === target.id) return data;
+          const [item] = context.section.items.splice(context.index, 1); target.items.push(item); stamp(scene); return data;
+        },
+        deleteItem(current, sceneId, itemId) {
+          const data = clone(current); const scene = getScene(data, sceneId); const context = getItemContext(scene, itemId);
+          context.section.items.splice(context.index, 1); stamp(scene); return data;
+        },
+        clearChecks(current, sceneId) {
+          const data = clone(current); const scene = getScene(data, sceneId);
+          scene.sections.forEach(section => section.items.forEach(item => { item.checked = false; })); stamp(scene); return data;
+        },
+        addSection(current, sceneId, inputName) {
+          const data = clone(current); const scene = getScene(data, sceneId); const name = requireName(inputName, '请输入分区名称');
+          if (scene.sections.some(section => normalize(section.name) === normalize(name))) throw new Error('分区名称已存在');
+          const sectionId = uid('section'); scene.sections.push({ id: sectionId, name, items: [] }); stamp(scene); return { data, sectionId };
+        },
+        renameSection(current, sceneId, sectionId, inputName) {
+          const data = clone(current); const scene = getScene(data, sceneId); const section = getSection(scene, sectionId); const name = requireName(inputName, '请输入分区名称');
+          if (scene.sections.some(entry => entry.id !== sectionId && normalize(entry.name) === normalize(name))) throw new Error('分区名称已存在');
+          section.name = name; stamp(scene); return data;
+        },
+        moveSection(current, sceneId, sectionId, direction) {
+          const data = clone(current); const scene = getScene(data, sceneId); const index = scene.sections.findIndex(section => section.id === sectionId);
+          if (index < 0) throw new Error('分区不存在');
+          const next = index + direction; if (next < 0 || next >= scene.sections.length) return data;
+          [scene.sections[index], scene.sections[next]] = [scene.sections[next], scene.sections[index]]; stamp(scene); return data;
+        },
+        deleteSection(current, sceneId, sectionId) {
+          const data = clone(current); const scene = getScene(data, sceneId);
+          if (scene.sections.length === 1) throw new Error('每张清单至少需要一个分区');
+          const index = scene.sections.findIndex(section => section.id === sectionId); if (index < 0) throw new Error('分区不存在');
+          const targetIndex = index < scene.sections.length - 1 ? index + 1 : index - 1;
+          scene.sections[targetIndex].items.push(...scene.sections[index].items); scene.sections.splice(index, 1); stamp(scene); return data;
+        }
+      };
+
+      function loadData() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw === null) return { data: createSeedData(), warning: null };
+          const parsed = JSON.parse(raw);
+          if (!validData(parsed)) throw new Error('invalid data');
+          return { data: parsed, warning: null };
+        } catch (error) {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) localStorage.setItem(`${STORAGE_KEY}.corrupt.${Date.now()}`, raw);
+          } catch (_) {}
+          return { data: createSeedData(), warning: '本地数据异常，已恢复示例清单' };
+        }
+      }
+
+      function saveData(data) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); return null; }
+        catch (error) { return '当前浏览器无法保存，刷新后可能丢失修改'; }
+      }
+
+      let data;
+      const ui = { screen: 'home', activeSceneId: null, filter: 'all', collapsed: new Set(), lastSectionId: null };
+      let formContext = null;
+      let confirmAction = null;
+      let returnFocus = null;
+      let returnToManage = false;
+      let toastTimer = null;
+      let storageWarningShown = false;
+
+      const homeScreen = $('#home-screen');
+      const checklistScreen = $('#checklist-screen');
+      const formSheet = $('#form-sheet');
+      const actionSheet = $('#action-sheet');
+      const manageSheet = $('#manage-sheet');
+      const confirmDialog = $('#confirm-dialog');
+
+      function closeOpenDialogs(except) {
+        document.querySelectorAll('dialog[open]').forEach(dialog => { if (dialog !== except) dialog.close(); });
+      }
+
+      function openDialog(dialog, trigger = document.activeElement) {
+        returnFocus = trigger instanceof HTMLElement ? trigger : null;
+        closeOpenDialogs(dialog);
+        if (!dialog.open) dialog.showModal();
+      }
+
+      function restoreFocus() {
+        requestAnimationFrame(() => { if (returnFocus && document.contains(returnFocus)) returnFocus.focus(); });
+      }
+
+      function showToast(message, warning = false) {
+        const toast = $('#toast');
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.toggle('warning', warning);
+        toast.hidden = false;
+        toastTimer = window.setTimeout(() => { toast.hidden = true; }, 2000);
+      }
+
+      function commit(nextData, message, options = {}) {
+        data = nextData;
+        const warning = saveData(data);
+        render();
+        if (options.manage && manageSheet.open) renderManage();
+        if (warning && !storageWarningShown) { storageWarningShown = true; showToast(warning, true); }
+        else if (message) showToast(message);
+      }
+
+      function sceneMark(name) { return escapeHtml(Array.from(name.trim())[0] || '清'); }
+
+      function renderHome() {
+        const cards = data.scenes.map(scene => {
+          const progress = stats(scene);
+          const detail = progress.total ? `<b>${progress.checked}/${progress.total}</b> 已勾选 · ${progress.sectionCount} 个分区` : `还没有物品 · ${progress.sectionCount} 个分区`;
+          return `<article class="scene-card" data-testid="scene-${escapeHtml(scene.id)}">
+            <button class="scene-open" type="button" data-action="open-scene" data-scene-id="${escapeHtml(scene.id)}" aria-label="打开${escapeHtml(scene.name)}">
+              <span class="scene-mark" aria-hidden="true">${sceneMark(scene.name)}</span>
+              <span class="scene-copy"><strong>${escapeHtml(scene.name)}</strong><span>${detail}</span></span>
+            </button>
+            <button class="scene-more" type="button" data-action="open-scene-menu" data-scene-id="${escapeHtml(scene.id)}" aria-label="管理${escapeHtml(scene.name)}">⋯</button>
+          </article>`;
+        }).join('');
+
+        homeScreen.innerHTML = `<div class="home-top"><span class="brand">带上</span><span class="quiet">我的清单</span></div>
+          <section class="hero"><span class="eyebrow">出门前，快速看一遍</span><h1>这次要检查哪张清单？</h1><p>打开对应清单，照着逐项确认就行</p></section>
+          <section class="scene-list" aria-label="出门清单">${cards || '<div class="home-empty"><strong>还没有清单</strong><span>先创建一张常用清单，以后出门直接打开。</span></div>'}</section>
+          <button class="new-scene" type="button" data-action="new-scene" data-testid="new-scene">＋ 新增清单</button>`;
+      }
+
+      function sectionProgress(section) {
+        return { checked: section.items.filter(item => item.checked).length, total: section.items.length };
+      }
+
+      function renderChecklist() {
+        let scene;
+        try { scene = getScene(data, ui.activeSceneId); }
+        catch (_) { ui.screen = 'home'; ui.activeSceneId = null; renderHome(); return; }
+        const progress = stats(scene);
+        const pending = progress.total - progress.checked;
+        const nav = scene.sections.map(section => {
+          const sectionStats = sectionProgress(section);
+          return `<button class="section-chip" type="button" data-action="jump-section" data-section-id="${escapeHtml(section.id)}">${escapeHtml(section.name)} <b>${sectionStats.checked}/${sectionStats.total}</b></button>`;
+        }).join('');
+
+        const visibleSections = scene.sections.map(section => ({
+          section,
+          items: ui.filter === 'pending' ? section.items.filter(item => !item.checked) : section.items
+        })).filter(entry => ui.filter === 'all' || entry.items.length > 0);
+
+        let sectionHtml = visibleSections.map(({ section, items }) => {
+          const sectionStats = sectionProgress(section);
+          const collapsed = ui.collapsed.has(section.id);
+          const complete = sectionStats.total > 0 && sectionStats.checked === sectionStats.total;
+          const itemHtml = items.map(item => `<div class="item-row">
+            <button class="item-toggle${item.checked ? ' is-checked' : ''}" type="button" data-action="toggle-item" data-item-id="${escapeHtml(item.id)}" aria-pressed="${item.checked}">
+              <span class="check-circle" aria-hidden="true">✓</span><span class="item-name">${escapeHtml(item.name)}</span>
+            </button>
+            <button class="item-more" type="button" data-action="open-item-menu" data-item-id="${escapeHtml(item.id)}" aria-label="管理${escapeHtml(item.name)}">⋯</button>
+          </div>`).join('');
+          return `<article class="section-card${collapsed ? ' is-collapsed' : ''}" id="section-${escapeHtml(section.id)}">
+            <header class="section-head">
+              <button class="section-toggle" type="button" data-action="toggle-section" data-section-id="${escapeHtml(section.id)}" aria-expanded="${!collapsed}">
+                <span class="chevron" aria-hidden="true">›</span><span class="section-title"><strong>${escapeHtml(section.name)}</strong><small class="${complete ? 'complete' : ''}">${complete ? '本区已全部勾选' : `${sectionStats.checked}/${sectionStats.total} 已勾选`}</small></span>
+              </button>
+              <button class="section-add" type="button" data-action="add-item" data-section-id="${escapeHtml(section.id)}" aria-label="添加到${escapeHtml(section.name)}">＋</button>
+            </header>
+            <div class="item-list" ${collapsed ? 'hidden' : ''}>${itemHtml || '<div class="empty-section">这个分区暂时没有物品</div>'}</div>
+          </article>`;
+        }).join('');
+
+        if (!visibleSections.length) sectionHtml = '<div class="empty-state"><strong>已经全部勾选</strong>切回“全部”可以查看完整清单。</div>';
+        else if (!progress.total) sectionHtml = `<div class="empty-state"><strong>这张清单还是空的</strong>点击下方按钮，添加第一个物品。</div>${sectionHtml}`;
+
+        checklistScreen.innerHTML = `<header class="topbar">
+            <button class="icon-button" type="button" data-action="back-home" aria-label="返回首页">‹</button>
+            <div class="topbar-title"><strong>${escapeHtml(scene.name)}</strong><span>${progress.total} 件物品 · ${progress.sectionCount} 个分区</span></div>
+            <button class="icon-button" type="button" data-action="open-current-settings" aria-label="清单设置">⋯</button>
+          </header>
+          <section class="summary" aria-label="清单进度"><div class="summary-row"><div class="summary-count"><strong>${progress.checked}</strong><span> / ${progress.total}</span></div><span class="summary-note">${pending ? `还有 ${pending} 件未确认` : progress.total ? '已全部确认' : '添加物品后开始检查'}</span></div><div class="progress"><i style="width:${progress.total ? progress.checked / progress.total * 100 : 0}%"></i></div></section>
+          <section class="tools"><div class="filters">
+            <button class="filter-button${ui.filter === 'all' ? ' is-active' : ''}" type="button" data-action="set-filter" data-filter="all">全部 ${progress.total}</button>
+            <button class="filter-button${ui.filter === 'pending' ? ' is-active' : ''}" type="button" data-action="set-filter" data-filter="pending">未勾选 ${pending}</button>
+          </div><nav class="section-nav" aria-label="快速跳转到分区">${nav}</nav></section>
+          <section class="sections" aria-label="物品清单">${sectionHtml}</section>
+          <div class="bottom-bar"><button class="primary-button" type="button" data-action="add-item" data-testid="global-add-item">＋ 添加物品</button></div>`;
+      }
+
+      function render() {
+        const isHome = ui.screen === 'home';
+        homeScreen.hidden = !isHome;
+        checklistScreen.hidden = isHome;
+        if (isHome) renderHome(); else renderChecklist();
+      }
+
+      function navigate(screen, sceneId = null) {
+        ui.screen = screen;
+        ui.activeSceneId = sceneId;
+        ui.filter = 'all';
+        ui.collapsed.clear();
+        ui.lastSectionId = null;
+        render();
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+
+      function openForm(context, trigger) {
+        formContext = context;
+        returnToManage = Boolean(context.returnToManage);
+        const scene = context.sceneId ? getScene(data, context.sceneId) : null;
+        const item = context.itemId && scene ? getItemContext(scene, context.itemId).item : null;
+        const section = context.sectionId && scene ? getSection(scene, context.sectionId) : null;
+        const config = {
+          'new-scene': ['建立常用清单', '新增清单', '清单名称', '', '例如：露营', '创建并进入'],
+          'rename-scene': ['整理清单', '修改清单名称', '清单名称', scene?.name || '', '', '保存'],
+          'add-item': ['快速添加', section ? `添加到${section.name}` : '添加物品', '物品名称', '', '例如：运动相机', '加入清单'],
+          'rename-item': ['整理物品', '修改物品名称', '物品名称', item?.name || '', '', '保存'],
+          'add-section': ['轻量整理', '新增分区', '分区名称', '', '例如：户外用品', '新增'],
+          'rename-section': ['整理分区', '修改分区名称', '分区名称', section?.name || '', '', '保存']
+        }[context.mode];
+        $('#form-kicker').textContent = config[0];
+        $('#form-title').textContent = config[1];
+        $('#name-label').textContent = config[2];
+        $('#name-input').value = config[3];
+        $('#name-input').placeholder = config[4];
+        $('#form-submit').textContent = config[5];
+        $('#form-error').textContent = '';
+        const needsSection = context.mode === 'add-item';
+        $('#section-field').hidden = !needsSection;
+        if (needsSection) {
+          const defaultId = context.sectionId || (scene.sections.some(entry => entry.id === ui.lastSectionId) ? ui.lastSectionId : scene.sections[0].id);
+          $('#section-select').innerHTML = scene.sections.map(entry => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.name)}</option>`).join('');
+          $('#section-select').value = defaultId;
+        }
+        openDialog(formSheet, trigger);
+        requestAnimationFrame(() => { $('#name-input').focus(); $('#name-input').select(); });
+      }
+
+      function closeForm() {
+        if (formSheet.open) formSheet.close();
+        const shouldReturn = returnToManage;
+        returnToManage = false;
+        if (shouldReturn) openManage(); else restoreFocus();
+      }
+
+      function openActions({ title, kicker = '更多操作', html }, trigger) {
+        $('#action-kicker').textContent = kicker;
+        $('#action-title').textContent = title;
+        $('#action-list').innerHTML = html;
+        openDialog(actionSheet, trigger);
+      }
+
+      function openSceneMenu(sceneId, trigger) {
+        const scene = getScene(data, sceneId);
+        openActions({ title: scene.name, html: `
+          <button class="action-button" type="button" data-action="rename-scene" data-scene-id="${escapeHtml(scene.id)}">修改清单名称</button>
+          <button class="action-button danger" type="button" data-action="delete-scene" data-scene-id="${escapeHtml(scene.id)}">删除这张清单<span class="action-hint">清单内的物品也会删除</span></button>` }, trigger);
+      }
+
+      function openCurrentSettings(trigger) {
+        const scene = getScene(data, ui.activeSceneId);
+        const progress = stats(scene);
+        openActions({ title: '清单设置', kicker: scene.name, html: `
+          <button class="action-button" type="button" data-action="rename-current-scene">修改清单名称</button>
+          <button class="action-button" type="button" data-action="manage-sections">管理分区<span class="action-hint">新增、改名、排序或删除分区</span></button>
+          <button class="action-button" type="button" data-action="clear-checks" ${progress.checked ? '' : 'disabled'}>清空全部勾选<span class="action-hint">保留物品，只恢复未勾选状态</span></button>
+          <button class="action-button danger" type="button" data-action="delete-current-scene">删除这张清单</button>` }, trigger);
+      }
+
+      function openItemMenu(itemId, trigger) {
+        const scene = getScene(data, ui.activeSceneId);
+        const { item, section } = getItemContext(scene, itemId);
+        const moveButtons = scene.sections.filter(entry => entry.id !== section.id).map(entry => `<button class="action-button" type="button" data-action="move-item" data-item-id="${escapeHtml(item.id)}" data-section-id="${escapeHtml(entry.id)}">移动到${escapeHtml(entry.name)}</button>`).join('');
+        openActions({ title: item.name, kicker: section.name, html: `
+          <button class="action-button" type="button" data-action="rename-item" data-item-id="${escapeHtml(item.id)}">修改名称</button>
+          ${moveButtons ? `<div class="action-hint">移动到其他分区</div>${moveButtons}` : ''}
+          <button class="action-button danger" type="button" data-action="delete-item" data-item-id="${escapeHtml(item.id)}">删除这个物品</button>` }, trigger);
+      }
+
+      function renderManage() {
+        const scene = getScene(data, ui.activeSceneId);
+        $('#manage-list').innerHTML = scene.sections.map((section, index) => `<div class="manage-row">
+          <div class="manage-info"><strong>${escapeHtml(section.name)}</strong><span>${section.items.length} 件物品</span></div>
+          <div class="manage-actions">
+            <button class="mini-button" type="button" data-action="rename-section" data-section-id="${escapeHtml(section.id)}">改名</button>
+            <button class="mini-button" type="button" data-action="move-section-up" data-section-id="${escapeHtml(section.id)}" ${index === 0 ? 'disabled' : ''}>上移</button>
+            <button class="mini-button" type="button" data-action="move-section-down" data-section-id="${escapeHtml(section.id)}" ${index === scene.sections.length - 1 ? 'disabled' : ''}>下移</button>
+            <button class="mini-button danger" type="button" data-action="delete-section" data-section-id="${escapeHtml(section.id)}" ${scene.sections.length === 1 ? 'disabled title="每张清单至少需要一个分区"' : ''}>删除</button>
+          </div>
+        </div>`).join('');
+      }
+
+      function openManage(trigger = document.activeElement) {
+        renderManage();
+        openDialog(manageSheet, trigger);
+      }
+
+      function openConfirm({ title, message, label = '确认', danger = false, action }, trigger) {
+        confirmAction = action;
+        $('#confirm-title').textContent = title;
+        $('#confirm-message').textContent = message;
+        $('#confirm-button').textContent = label;
+        $('#confirm-button').classList.toggle('danger', danger);
+        openDialog(confirmDialog, trigger);
+      }
+
+      function deleteSceneWithConfirm(sceneId, trigger) {
+        const scene = getScene(data, sceneId);
+        openConfirm({
+          title: `删除“${scene.name}”？`,
+          message: '这张清单中的分区和物品都会被删除，此操作无法撤销。',
+          label: '确认删除', danger: true,
+          action: () => {
+            data = Model.deleteScene(data, sceneId);
+            const warning = saveData(data);
+            if (ui.activeSceneId === sceneId) navigate('home'); else render();
+            showToast(warning || '清单已删除', Boolean(warning));
+          }
+        }, trigger);
+      }
+
+      $('#entity-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const value = $('#name-input').value;
+        const context = formContext;
+        try {
+          let next;
+          let message;
+          if (context.mode === 'new-scene') {
+            const result = Model.createScene(data, value);
+            data = result.data;
+            const warning = saveData(data);
+            formSheet.close();
+            navigate('checklist', result.sceneId);
+            showToast(warning || '清单已创建', Boolean(warning));
+            return;
+          }
+          if (context.mode === 'rename-scene') { next = Model.renameScene(data, context.sceneId, value); message = '清单名称已修改'; }
+          if (context.mode === 'add-item') {
+            const sectionId = $('#section-select').value;
+            const result = Model.addItem(data, context.sceneId, value, sectionId);
+            next = result.data; ui.lastSectionId = sectionId; message = '物品已加入清单';
+          }
+          if (context.mode === 'rename-item') { next = Model.renameItem(data, context.sceneId, context.itemId, value); message = '物品名称已修改'; }
+          if (context.mode === 'add-section') { const result = Model.addSection(data, context.sceneId, value); next = result.data; message = '分区已新增'; }
+          if (context.mode === 'rename-section') { next = Model.renameSection(data, context.sceneId, context.sectionId, value); message = '分区名称已修改'; }
+          data = next;
+          const warning = saveData(data);
+          formSheet.close();
+          render();
+          if (returnToManage) { returnToManage = false; openManage(); }
+          showToast(warning || message, Boolean(warning));
+        } catch (error) {
+          $('#form-error').textContent = error.message;
+          $('#name-input').focus();
+        }
+      });
+
+      document.addEventListener('click', event => {
+        const button = event.target.closest('[data-action]');
+        if (!button || button.disabled) return;
+        const action = button.dataset.action;
+        const sceneId = button.dataset.sceneId || ui.activeSceneId;
+        const sectionId = button.dataset.sectionId;
+        const itemId = button.dataset.itemId;
+
+        try {
+          if (action === 'open-scene') navigate('checklist', sceneId);
+          else if (action === 'back-home') navigate('home');
+          else if (action === 'new-scene') openForm({ mode: 'new-scene' }, button);
+          else if (action === 'open-scene-menu') openSceneMenu(sceneId, button);
+          else if (action === 'rename-scene') { actionSheet.close(); openForm({ mode: 'rename-scene', sceneId }, button); }
+          else if (action === 'rename-current-scene') { actionSheet.close(); openForm({ mode: 'rename-scene', sceneId }, button); }
+          else if (action === 'delete-scene') { actionSheet.close(); deleteSceneWithConfirm(sceneId, button); }
+          else if (action === 'delete-current-scene') { actionSheet.close(); deleteSceneWithConfirm(sceneId, button); }
+          else if (action === 'open-current-settings') openCurrentSettings(button);
+          else if (action === 'set-filter') { ui.filter = button.dataset.filter; render(); }
+          else if (action === 'jump-section') document.getElementById(`section-${sectionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          else if (action === 'toggle-section') { ui.collapsed.has(sectionId) ? ui.collapsed.delete(sectionId) : ui.collapsed.add(sectionId); render(); }
+          else if (action === 'toggle-item') commit(Model.toggleItem(data, sceneId, itemId));
+          else if (action === 'add-item') openForm({ mode: 'add-item', sceneId, sectionId }, button);
+          else if (action === 'open-item-menu') openItemMenu(itemId, button);
+          else if (action === 'rename-item') { actionSheet.close(); openForm({ mode: 'rename-item', sceneId, itemId }, button); }
+          else if (action === 'move-item') { actionSheet.close(); commit(Model.moveItem(data, sceneId, itemId, sectionId), '物品已移动'); }
+          else if (action === 'delete-item') {
+            const item = getItemContext(getScene(data, sceneId), itemId).item;
+            actionSheet.close();
+            openConfirm({ title: `删除“${item.name}”？`, message: '删除后无法恢复。', label: '确认删除', danger: true, action: () => commit(Model.deleteItem(data, sceneId, itemId), '物品已删除') }, button);
+          }
+          else if (action === 'manage-sections') { actionSheet.close(); openManage(button); }
+          else if (action === 'add-section') { manageSheet.close(); openForm({ mode: 'add-section', sceneId, returnToManage: true }, button); }
+          else if (action === 'rename-section') { manageSheet.close(); openForm({ mode: 'rename-section', sceneId, sectionId, returnToManage: true }, button); }
+          else if (action === 'move-section-up') commit(Model.moveSection(data, sceneId, sectionId, -1), '分区已上移', { manage: true });
+          else if (action === 'move-section-down') commit(Model.moveSection(data, sceneId, sectionId, 1), '分区已下移', { manage: true });
+          else if (action === 'delete-section') {
+            const scene = getScene(data, sceneId);
+            const index = scene.sections.findIndex(section => section.id === sectionId);
+            const source = scene.sections[index];
+            const target = scene.sections[index < scene.sections.length - 1 ? index + 1 : index - 1];
+            manageSheet.close();
+            openConfirm({ title: `删除“${source.name}”？`, message: source.items.length ? `其中 ${source.items.length} 件物品会移动到“${target.name}”，物品不会被删除。` : '这个分区没有物品，删除后无法恢复。', label: '确认删除', danger: true, action: () => { commit(Model.deleteSection(data, sceneId, sectionId), '分区已删除'); openManage(); } }, button);
+          }
+          else if (action === 'clear-checks') {
+            actionSheet.close();
+            openConfirm({ title: '清空全部勾选？', message: '所有物品会恢复为未勾选，清单内容不会改变。', label: '确认清空', action: () => { ui.filter = 'all'; commit(Model.clearChecks(data, sceneId), '已清空全部勾选'); } }, button);
+          }
+          else if (action === 'close-form') closeForm();
+          else if (action === 'close-action') { actionSheet.close(); restoreFocus(); }
+          else if (action === 'close-manage') { manageSheet.close(); restoreFocus(); }
+          else if (action === 'cancel-confirm') { confirmAction = null; confirmDialog.close(); restoreFocus(); }
+          else if (action === 'confirm') {
+            const run = confirmAction;
+            confirmAction = null;
+            confirmDialog.close();
+            if (run) run();
+          }
+        } catch (error) {
+          showToast(error.message, true);
+        }
+      });
+
+      [formSheet, actionSheet, manageSheet].forEach(dialog => {
+        dialog.addEventListener('click', event => { if (event.target === dialog) { dialog.close(); restoreFocus(); } });
+      });
+      confirmDialog.addEventListener('cancel', event => { event.preventDefault(); confirmAction = null; confirmDialog.close(); restoreFocus(); });
+
+      const loaded = loadData();
+      data = loaded.data;
+      const initialWarning = saveData(data) || loaded.warning;
+      render();
+      if (initialWarning) { storageWarningShown = true; showToast(initialWarning, true); }
+
+      globalThis.BibeiPrototype = Object.freeze({
+        getData: () => clone(data),
+        reset: () => { data = createSeedData(); saveData(data); navigate('home'); },
+        storageKey: STORAGE_KEY
+      });
+    })();
+  </script>
+</body>
+</html>

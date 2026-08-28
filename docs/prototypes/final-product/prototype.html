@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f5ee">
+  <title>带上 · 最终产品原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #e8e5dc;
+      --paper: #f8f6f0;
+      --surface: #fffdf8;
+      --ink: #17221d;
+      --muted: #6d756f;
+      --line: #dedbd0;
+      --green: #3f775d;
+      --green-deep: #2d614a;
+      --green-soft: #e3eee8;
+      --sand: #f0eadc;
+      --danger: #a6493f;
+      --shadow: 0 18px 48px rgba(46, 56, 49, .13);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(255,255,255,.8), transparent 24%),
+        var(--canvas);
+      color: var(--ink);
+    }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+      outline: 3px solid rgba(63, 119, 93, .28);
+      outline-offset: 2px;
+    }
+
+    .prototype-shell {
+      width: min(100%, 430px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .screen {
+      min-height: 100dvh;
+      padding: max(22px, env(safe-area-inset-top)) 20px calc(118px + env(safe-area-inset-bottom));
+      background: var(--paper);
+    }
+
+    .home-topbar, .checklist-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      color: var(--green);
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .text-action {
+      min-height: 44px;
+      padding: 0 3px 0 14px;
+      border: 0;
+      background: transparent;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .home-intro { padding: 34px 0 24px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: .08em;
+    }
+
+    h1, h2, p { margin-top: 0; }
+    .home-intro h1 {
+      margin-bottom: 8px;
+      font-size: clamp(34px, 9vw, 42px);
+      line-height: 1.12;
+      letter-spacing: -.045em;
+    }
+    .home-intro > p:last-child { margin: 0; color: var(--muted); font-size: 15px; }
+
+    .toast {
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border: 1px solid #cfe1d7;
+      border-radius: 13px;
+      background: var(--green-soft);
+      color: var(--green-deep);
+      font-size: 14px;
+      font-weight: 650;
+      animation: toast-in .22s ease-out;
+    }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(-7px); } }
+
+    .scene-list { display: grid; gap: 12px; }
+    .scene-card {
+      width: 100%;
+      min-height: 92px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--surface);
+      box-shadow: 0 5px 18px rgba(52, 63, 55, .045);
+      display: grid;
+      grid-template-columns: 54px 1fr 20px;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .scene-card:hover { border-color: #bdcfc4; box-shadow: 0 10px 26px rgba(52, 63, 55, .08); }
+    .scene-card:active { transform: scale(.987); }
+
+    .scene-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 17px;
+      display: grid;
+      place-items: center;
+      color: var(--green);
+      background: var(--green-soft);
+    }
+    .scene-icon--briefcase { color: #85672f; background: #f4ecda; }
+    .scene-icon--suitcase { color: #556d7d; background: #e5edf1; }
+    .scene-icon--compass { color: #775b78; background: #eee6ef; }
+    .scene-icon svg { width: 28px; height: 28px; }
+
+    .scene-copy { min-width: 0; display: grid; gap: 5px; }
+    .scene-copy > strong { font-size: 18px; line-height: 1.2; }
+    .scene-meta, .scene-progress { color: var(--muted); font-size: 13px; }
+    .scene-progress strong { color: var(--green-deep); font-size: 14px; }
+    .scene-arrow { color: var(--green); font-size: 27px; font-weight: 300; }
+
+    .create-scene {
+      width: 100%;
+      min-height: 58px;
+      margin-top: 16px;
+      border: 1px dashed #9db8a8;
+      border-radius: 18px;
+      background: transparent;
+      color: var(--green-deep);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .checklist-screen { padding-left: 16px; padding-right: 16px; }
+    .checklist-topbar {
+      display: grid;
+      grid-template-columns: 46px 1fr 46px;
+      gap: 8px;
+      align-items: center;
+    }
+    .icon-action {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      font-size: 31px;
+      cursor: pointer;
+    }
+    .more-action { font-size: 16px; letter-spacing: 1px; }
+    .checklist-title { min-width: 0; text-align: center; }
+    .checklist-title h1 {
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 19px;
+    }
+    .checklist-title span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+    .progress-card { padding: 28px 4px 22px; }
+    .progress-copy { display: flex; justify-content: space-between; align-items: end; margin-bottom: 10px; }
+    .progress-copy span { color: var(--muted); font-size: 15px; }
+    .progress-copy strong { color: var(--ink); font-size: 31px; line-height: 1; }
+    .progress-copy small { color: var(--green); font-size: 13px; font-weight: 700; }
+    .progress-track { height: 7px; border-radius: 999px; background: #e5e2d8; overflow: hidden; }
+    .progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width .2s ease; }
+
+    .filter-tabs {
+      width: max-content;
+      display: flex;
+      gap: 5px;
+      margin-bottom: 14px;
+      padding: 4px;
+      border-radius: 13px;
+      background: #ece9df;
+    }
+    .filter-tabs button {
+      min-height: 38px;
+      padding: 0 15px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .filter-tabs button.is-active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(47, 56, 50, .08); }
+    .filter-tabs span { margin-left: 3px; opacity: .72; }
+
+    .flat-list {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+    }
+    .item-row {
+      width: 100%;
+      min-height: 66px;
+      padding: 10px 14px;
+      border: 0;
+      border-bottom: 1px solid #ece9df;
+      background: transparent;
+      display: grid;
+      grid-template-columns: 27px 1fr;
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+    .item-row:last-child { border-bottom: 0; }
+    .item-row.is-checked { background: #f5f7f3; }
+    .check-mark {
+      width: 25px;
+      height: 25px;
+      border: 1.7px solid #aeb6b0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .is-checked .check-mark { border-color: var(--green); background: var(--green); }
+    .item-copy { min-width: 0; display: grid; gap: 3px; }
+    .item-title { font-size: 16px; font-weight: 650; }
+    .item-title small { margin-left: 7px; color: var(--green); font-size: 13px; }
+    .item-note { color: var(--muted); font-size: 12px; }
+    .is-checked .item-title { color: #8d948f; text-decoration: line-through; text-decoration-thickness: 1px; }
+
+    .empty-state { min-height: 250px; padding: 45px 26px; display: grid; place-items: center; align-content: center; text-align: center; }
+    .empty-check { width: 52px; height: 52px; margin-bottom: 15px; border-radius: 50%; display: grid; place-items: center; background: var(--green-soft); color: var(--green); font-size: 25px; }
+    .empty-state strong { font-size: 18px; }
+    .empty-state p { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+
+    .bottom-actions {
+      position: fixed;
+      left: 50%;
+      right: auto;
+      bottom: 0;
+      z-index: 5;
+      width: min(100%, 430px);
+      transform: translateX(-50%);
+      padding: 14px 16px max(18px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 42% 1fr;
+      gap: 10px;
+      border-top: 1px solid rgba(222, 219, 208, .88);
+      background: rgba(248, 246, 240, .94);
+      backdrop-filter: blur(18px);
+    }
+    .add-button, .complete-button {
+      min-height: 54px;
+      border-radius: 17px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .add-button { border: 1px solid #abc1b3; background: var(--surface); color: var(--green-deep); }
+    .complete-button { border: 0; background: var(--green); color: white; box-shadow: 0 8px 20px rgba(63,119,93,.2); }
+
+    dialog {
+      width: min(calc(100% - 28px), 402px);
+      max-height: calc(100dvh - 28px);
+      margin: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 24px;
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 26px 80px rgba(20, 29, 24, .28);
+      overflow: hidden;
+    }
+    dialog::backdrop { background: rgba(19, 27, 23, .42); backdrop-filter: blur(3px); }
+    dialog.sheet {
+      width: min(100%, 430px);
+      max-height: min(82dvh, 700px);
+      margin: auto auto 0;
+      border-radius: 26px 26px 0 0;
+    }
+    .dialog-body { padding: 22px; }
+    .sheet-handle { width: 40px; height: 4px; margin: 10px auto 0; border-radius: 999px; background: #d5d1c7; }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .dialog-head h2 { margin: 0; font-size: 21px; }
+    .dialog-close { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--sand); font-size: 22px; cursor: pointer; }
+    .field { display: grid; gap: 7px; margin-top: 14px; }
+    .field > span { font-size: 13px; font-weight: 700; }
+    .field input, .field textarea {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 14px;
+      border: 1px solid #cfccc2;
+      border-radius: 14px;
+      background: #fffefa;
+      color: var(--ink);
+      outline: none;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(63,119,93,.1); }
+    .field textarea { min-height: 76px; resize: vertical; }
+    .field-error { min-height: 18px; margin: 8px 0 0; color: var(--danger); font-size: 12px; }
+    .suggestion-list { display: grid; gap: 7px; margin-top: 10px; }
+    .suggestion-list button {
+      min-height: 46px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #faf8f2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      cursor: pointer;
+    }
+    .suggestion-list small { color: var(--green); font-weight: 700; }
+    details { margin-top: 13px; border-top: 1px solid #ebe7dc; padding-top: 13px; }
+    summary { min-height: 40px; color: var(--muted); font-size: 13px; font-weight: 650; cursor: pointer; }
+    .dialog-primary, .dialog-secondary, .dialog-danger {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 14px;
+      border-radius: 15px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .dialog-primary { border: 0; background: var(--green); color: white; }
+    .dialog-secondary { border: 1px solid var(--line); background: transparent; }
+    .dialog-danger { border: 1px solid #e4bcb7; background: #fff4f2; color: var(--danger); }
+    .dialog-copy { margin: 0; color: var(--muted); line-height: 1.7; }
+    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .dialog-actions button { margin-top: 0; }
+
+    .history-list { display: grid; gap: 9px; max-height: 55dvh; overflow-y: auto; }
+    .history-row { padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: #faf8f2; display: grid; gap: 5px; }
+    .history-row strong { font-size: 15px; }
+    .history-row span { color: var(--muted); font-size: 12px; }
+    .history-empty { padding: 38px 20px; text-align: center; color: var(--muted); }
+    .more-list { display: grid; gap: 9px; }
+
+    @media (max-width: 430px) {
+      .prototype-shell { width: 100%; box-shadow: none; }
+      dialog { width: calc(100% - 24px); }
+      dialog.sheet { width: 100%; }
+    }
+
+    @media (min-width: 431px) {
+      body { padding: 28px 0; }
+      .prototype-shell { min-height: 844px; border-radius: 38px; }
+      .screen { min-height: 844px; }
+      .bottom-actions { border-radius: 0 0 38px 38px; }
+      dialog.sheet { margin-bottom: calc((100dvh - min(844px, 100dvh)) / 2); border-radius: 26px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-shell">
+    <div id="app"></div>
+  </div>
+
+  <dialog id="item-sheet" class="sheet">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <form id="item-form" class="dialog-body">
+      <div class="dialog-head">
+        <div><p class="eyebrow">默认长期保留</p><h2>添加物品</h2></div>
+        <button class="dialog-close" type="button" data-close="item-sheet" aria-label="关闭">×</button>
+      </div>
+      <label class="field">
+        <span>物品名称</span>
+        <input id="item-name" name="name" autocomplete="off" maxlength="40" placeholder="例如：折叠伞" required>
+      </label>
+      <div id="suggestion-list" class="suggestion-list"></div>
+      <details>
+        <summary>数量与备注（可选）</summary>
+        <label class="field"><span>数量</span><input id="item-quantity" name="quantity" type="number" min="1" max="99" value="1"></label>
+        <label class="field"><span>备注</span><textarea id="item-note" name="note" maxlength="80" placeholder="例如：放在背包侧袋"></textarea></label>
+      </details>
+      <p id="item-error" class="field-error" role="alert"></p>
+      <button id="item-submit" class="dialog-primary" type="submit">添加到当前场景</button>
+    </form>
+  </dialog>
+
+  <dialog id="scene-dialog">
+    <form id="scene-form" class="dialog-body">
+      <div class="dialog-head"><h2>创建场景</h2><button class="dialog-close" type="button" data-close="scene-dialog" aria-label="关闭">×</button></div>
+      <p class="dialog-copy">先给它一个名字，创建后直接添加要带的东西。</p>
+      <label class="field"><span>场景名称</span><input id="scene-name" maxlength="30" placeholder="例如：周日骑行" required></label>
+      <p id="scene-error" class="field-error" role="alert"></p>
+      <button class="dialog-primary" type="submit">创建并开始准备</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog">
+    <div class="dialog-body">
+      <div class="dialog-head"><h2 id="confirm-title">确认操作</h2><button class="dialog-close" type="button" data-close="confirm-dialog" aria-label="关闭">×</button></div>
+      <p id="confirm-copy" class="dialog-copy"></p>
+      <div class="dialog-actions">
+        <button class="dialog-secondary" type="button" data-close="confirm-dialog">取消</button>
+        <button id="confirm-submit" class="dialog-primary" type="button">确认</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="more-dialog" class="sheet">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="dialog-body">
+      <div class="dialog-head"><h2>本次准备</h2><button class="dialog-close" type="button" data-close="more-dialog" aria-label="关闭">×</button></div>
+      <div class="more-list">
+        <button class="dialog-secondary" type="button" data-action="restart">重新准备</button>
+        <button class="dialog-danger" type="button" data-action="abandon">放弃本次准备</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="history-dialog">
+    <div class="dialog-body">
+      <div class="dialog-head"><div><p class="eyebrow">完成记录</p><h2>历史</h2></div><button class="dialog-close" type="button" data-close="history-dialog" aria-label="关闭">×</button></div>
+      <div id="history-list" class="history-list"></div>
+    </div>
+  </dialog>
+
+  <script src="./final-product-state.js"></script>
+  <script src="./final-product-ui.js"></script>
+  <script>
+    (function () {
+      const app = document.getElementById('app');
+      const itemSheet = document.getElementById('item-sheet');
+      const itemForm = document.getElementById('item-form');
+      const itemName = document.getElementById('item-name');
+      const itemQuantity = document.getElementById('item-quantity');
+      const itemNote = document.getElementById('item-note');
+      const itemError = document.getElementById('item-error');
+      const suggestionList = document.getElementById('suggestion-list');
+      const sceneDialog = document.getElementById('scene-dialog');
+      const sceneForm = document.getElementById('scene-form');
+      const sceneName = document.getElementById('scene-name');
+      const sceneError = document.getElementById('scene-error');
+      const confirmDialog = document.getElementById('confirm-dialog');
+      const confirmTitle = document.getElementById('confirm-title');
+      const confirmCopy = document.getElementById('confirm-copy');
+      const confirmSubmit = document.getElementById('confirm-submit');
+      const moreDialog = document.getElementById('more-dialog');
+      const historyDialog = document.getElementById('history-dialog');
+      const historyList = document.getElementById('history-list');
+
+      let state = window.BibeiState.createInitialState();
+      let confirmHandler = null;
+      let toastTimer = null;
+
+      function render() {
+        app.innerHTML = window.BibeiUI.renderApp(state);
+      }
+
+      function closeDialog(dialog) {
+        if (dialog.open) dialog.close();
+      }
+
+      function showConfirm(title, copy, label, handler, danger) {
+        confirmTitle.textContent = title;
+        confirmCopy.textContent = copy;
+        confirmSubmit.textContent = label;
+        confirmSubmit.className = danger ? 'dialog-danger' : 'dialog-primary';
+        confirmHandler = handler;
+        confirmDialog.showModal();
+      }
+
+      function scheduleToastDismissal() {
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(function () {
+          state = window.BibeiState.dismissToast(state);
+          render();
+        }, 3000);
+      }
+
+      function complete(force) {
+        const result = window.BibeiState.completePreparation(state, force);
+        if (result.requiresConfirmation) {
+          showConfirm(
+            '还有物品未确认',
+            `还有 ${result.remaining} 件物品没有勾选，仍然完成本次准备吗？`,
+            '仍然完成',
+            function () { complete(true); },
+            false
+          );
+          return;
+        }
+        state = result.state;
+        closeDialog(confirmDialog);
+        render();
+        scheduleToastDismissal();
+      }
+
+      function openItemSheet() {
+        itemForm.reset();
+        itemQuantity.value = '1';
+        itemError.textContent = '';
+        suggestionList.innerHTML = '';
+        itemSheet.showModal();
+        requestAnimationFrame(function () { itemName.focus(); });
+      }
+
+      function updateSuggestions() {
+        const suggestions = window.BibeiState.searchCatalog(state, itemName.value).slice(0, 4);
+        suggestionList.innerHTML = suggestions.map(function (item) {
+          return `<button type="button" data-action="use-suggestion" data-item-name="${item.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"><span>${item.name}</span><small>直接添加</small></button>`;
+        }).join('');
+      }
+
+      function addNamedItem(name) {
+        try {
+          state = window.BibeiState.addItem(state, {
+            name: name,
+            quantity: itemQuantity.value,
+            note: itemNote.value
+          });
+          closeDialog(itemSheet);
+          render();
+        } catch (error) {
+          itemError.textContent = error.message;
+        }
+      }
+
+      function renderHistory() {
+        if (!state.history.length) {
+          historyList.innerHTML = '<div class="history-empty">完成一次准备后，记录会出现在这里</div>';
+          return;
+        }
+        historyList.innerHTML = state.history.map(function (entry) {
+          const when = new Date(entry.completedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          return `<article class="history-row"><strong>${entry.sceneName}</strong><span>${when} · ${entry.checkedCount}/${entry.totalCount} 已确认</span></article>`;
+        }).join('');
+      }
+
+      app.addEventListener('click', function (event) {
+        const target = event.target.closest('[data-action]');
+        if (!target) return;
+        const action = target.dataset.action;
+        if (action === 'open-scene') {
+          state = window.BibeiState.openScene(state, target.dataset.sceneId);
+          render();
+        } else if (action === 'toggle-item') {
+          state = window.BibeiState.toggleItem(state, target.dataset.itemId);
+          render();
+        } else if (action === 'set-filter') {
+          state = window.BibeiState.setFilter(state, target.dataset.filter);
+          render();
+        } else if (action === 'back') {
+          state = Object.assign({}, state, { screen: 'home', activeSceneId: null, filter: 'all' });
+          render();
+        } else if (action === 'open-add') {
+          openItemSheet();
+        } else if (action === 'complete') {
+          complete(false);
+        } else if (action === 'open-create-scene') {
+          sceneForm.reset();
+          sceneError.textContent = '';
+          sceneDialog.showModal();
+          requestAnimationFrame(function () { sceneName.focus(); });
+        } else if (action === 'history') {
+          renderHistory();
+          historyDialog.showModal();
+        } else if (action === 'open-more') {
+          moreDialog.showModal();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        const closeButton = event.target.closest('[data-close]');
+        if (closeButton) closeDialog(document.getElementById(closeButton.dataset.close));
+        const suggestion = event.target.closest('[data-action="use-suggestion"]');
+        if (suggestion) addNamedItem(suggestion.dataset.itemName);
+        const action = event.target.closest('#more-dialog [data-action]');
+        if (!action) return;
+        if (action.dataset.action === 'restart') {
+          closeDialog(moreDialog);
+          showConfirm('重新准备？', '所有勾选状态会被清空，场景里的物品会保留。', '重新开始', function () {
+            state = window.BibeiState.restartPreparation(state);
+            closeDialog(confirmDialog);
+            render();
+          }, false);
+        }
+        if (action.dataset.action === 'abandon') {
+          closeDialog(moreDialog);
+          showConfirm('放弃本次准备？', '当前勾选进度会被清除，但场景里的物品不会改变。', '确认放弃', function () {
+            state = window.BibeiState.abandonPreparation(state);
+            closeDialog(confirmDialog);
+            render();
+          }, true);
+        }
+      });
+
+      itemName.addEventListener('input', updateSuggestions);
+      itemForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        addNamedItem(itemName.value);
+      });
+      sceneForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        try {
+          state = window.BibeiState.createScene(state, sceneName.value);
+          closeDialog(sceneDialog);
+          render();
+        } catch (error) {
+          sceneError.textContent = error.message;
+        }
+      });
+      confirmSubmit.addEventListener('click', function () {
+        const handler = confirmHandler;
+        confirmHandler = null;
+        if (handler) handler();
+      });
+
+      render();
+    }());
+  </script>
+</body>
+</html>

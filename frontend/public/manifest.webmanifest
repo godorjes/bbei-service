@@ -1,0 +1,17 @@
+{
+  "name": "带上",
+  "short_name": "带上",
+  "description": "简洁的个人出行物品清单",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f2",
+  "theme_color": "#4f8066",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

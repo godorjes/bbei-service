@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>带上 · 轻量分区方案 A</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f6f4ed;
+      --surface: #fffdf8;
+      --ink: #14221d;
+      --muted: #718078;
+      --line: #e2dfd5;
+      --green: #34735b;
+      --green-deep: #245943;
+      --green-soft: #e3efe9;
+      --sand: #eeeae0;
+      --danger: #a3473c;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e7e4dc; color: var(--ink); }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    [hidden] { display: none !important; }
+
+    .phone {
+      width: min(100%, 430px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--paper);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .screen { min-height: 100dvh; }
+
+    .home { padding: 28px 18px 48px; }
+    .home-top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { color: var(--green); font-size: 21px; font-weight: 800; letter-spacing: .06em; }
+    .quiet-label { color: var(--muted); font-size: 13px; }
+    .home-copy { margin: 44px 0 24px; }
+    .home-copy small { color: var(--green); font-weight: 700; letter-spacing: .08em; }
+    .home-copy h1 { margin: 8px 0 8px; font-size: 31px; letter-spacing: -.04em; }
+    .home-copy p { margin: 0; color: var(--muted); font-size: 15px; }
+    .scene-list { display: grid; gap: 12px; }
+    .scene-card {
+      width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 20px;
+      padding: 18px; display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 14px;
+      text-align: left; box-shadow: 0 4px 16px rgba(29, 47, 39, .035); cursor: pointer;
+    }
+    .scene-card:active { transform: scale(.99); }
+    .scene-icon {
+      width: 52px; height: 52px; display: grid; place-items: center; border-radius: 16px;
+      background: var(--green-soft); color: var(--green);
+    }
+    .scene-icon svg { width: 24px; height: 24px; }
+    .scene-copy { display: grid; gap: 5px; }
+    .scene-copy strong { font-size: 17px; }
+    .scene-copy span { color: var(--muted); font-size: 13px; }
+    .scene-copy span b { color: var(--green); font-weight: 700; }
+    .scene-arrow { color: var(--green); font-size: 25px; }
+    .new-list {
+      width: 100%; margin-top: 14px; min-height: 54px; border: 1px dashed #8aad9e;
+      border-radius: 18px; background: transparent; color: var(--green-deep); font-weight: 700;
+    }
+
+    .checklist { padding-bottom: 96px; }
+    .checklist-head {
+      padding: 18px 16px 12px; display: grid; grid-template-columns: 42px 1fr 42px;
+      align-items: center; background: rgba(246, 244, 237, .95); position: sticky; top: 0; z-index: 8;
+      backdrop-filter: blur(14px);
+    }
+    .icon-button {
+      width: 42px; height: 42px; border: 0; border-radius: 13px; background: transparent;
+      display: grid; place-items: center; cursor: pointer;
+    }
+    .icon-button:active { background: var(--sand); }
+    .icon-button svg { width: 21px; height: 21px; }
+    .title-block { text-align: center; }
+    .title-block strong { display: block; font-size: 18px; }
+    .title-block span { color: var(--muted); font-size: 11px; }
+
+    .summary { margin: 4px 16px 14px; padding: 17px; border-radius: 20px; background: var(--green-deep); color: white; }
+    .summary-line { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+    .summary-count strong { font-size: 30px; line-height: 1; }
+    .summary-count span { opacity: .75; font-size: 14px; }
+    .summary-meta { opacity: .78; font-size: 12px; }
+    .progress-track { margin-top: 14px; height: 5px; border-radius: 999px; background: rgba(255,255,255,.19); overflow: hidden; }
+    .progress-bar { height: 100%; width: 0; border-radius: inherit; background: white; transition: width .2s ease; }
+
+    .list-tools {
+      background: var(--paper); position: sticky; top: 72px; z-index: 7; padding: 0 16px 11px;
+      border-bottom: 1px solid rgba(226, 223, 213, .8);
+    }
+    .filter-row { display: flex; gap: 7px; margin-bottom: 10px; }
+    .filter-button {
+      min-height: 36px; border: 0; padding: 0 14px; border-radius: 11px; background: var(--sand);
+      color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .filter-button.is-active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 9px rgba(29,47,39,.08); }
+    .section-nav { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding: 1px 0; }
+    .section-nav::-webkit-scrollbar { display: none; }
+    .section-chip {
+      flex: 0 0 auto; min-height: 31px; border: 1px solid var(--line); background: transparent;
+      border-radius: 999px; padding: 0 11px; color: var(--muted); font-size: 12px; cursor: pointer;
+    }
+    .section-chip b { color: var(--green); }
+
+    .sections { padding: 13px 12px 22px; display: grid; gap: 12px; }
+    .section-block { scroll-margin-top: 157px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .section-head {
+      width: 100%; min-height: 58px; border: 0; background: #fbfaf5; padding: 0 13px;
+      display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 9px; text-align: left;
+    }
+    .section-chevron { width: 18px; height: 18px; transition: transform .18s ease; color: var(--muted); }
+    .section-block.is-collapsed .section-chevron { transform: rotate(-90deg); }
+    .section-title { display: grid; gap: 2px; }
+    .section-title strong { font-size: 15px; }
+    .section-title span { color: var(--muted); font-size: 11px; }
+    .section-title span.is-complete { color: var(--green); font-weight: 700; }
+    .section-mini-progress { width: 34px; height: 4px; border-radius: 999px; background: var(--sand); overflow: hidden; }
+    .section-mini-progress i { display: block; height: 100%; background: var(--green); }
+    .section-add {
+      width: 35px; height: 35px; border: 0; border-radius: 11px; background: var(--green-soft);
+      color: var(--green-deep); font-size: 20px; cursor: pointer;
+    }
+    .item-list { border-top: 1px solid var(--line); }
+    .item-row {
+      width: 100%; min-height: 53px; border: 0; border-bottom: 1px solid var(--line); background: var(--surface);
+      padding: 0 14px; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+    }
+    .item-row:last-child { border-bottom: 0; }
+    .checkmark { width: 23px; height: 23px; border: 1.5px solid #aab5af; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; }
+    .checkmark svg { width: 14px; height: 14px; opacity: 0; }
+    .item-row.is-checked .checkmark { background: var(--green); border-color: var(--green); color: white; }
+    .item-row.is-checked .checkmark svg { opacity: 1; }
+    .item-row.is-checked .item-name { color: #87918c; text-decoration: line-through; }
+    .item-name { font-size: 15px; }
+    .empty-section { padding: 22px; color: var(--muted); text-align: center; font-size: 13px; }
+    .empty-list { padding: 60px 28px; text-align: center; color: var(--muted); }
+    .empty-list strong { display: block; color: var(--ink); margin-bottom: 6px; }
+
+    .bottom-bar {
+      position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(100%, 430px);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: rgba(255,253,248,.94);
+      backdrop-filter: blur(16px); border-top: 1px solid var(--line); z-index: 10;
+    }
+    .primary-button { width: 100%; min-height: 52px; border: 0; border-radius: 15px; background: var(--green); color: white; font-weight: 800; cursor: pointer; }
+
+    dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+    dialog::backdrop { background: rgba(15, 26, 21, .46); backdrop-filter: blur(2px); }
+    .sheet { width: min(100vw, 430px); margin: auto 0 0; }
+    .sheet[open] { display: grid; align-items: end; min-height: 100dvh; }
+    .sheet-panel { background: var(--surface); border-radius: 24px 24px 0 0; padding: 22px 18px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -16px 50px rgba(14,29,22,.18); }
+    .sheet-handle { width: 42px; height: 4px; border-radius: 999px; background: var(--line); margin: -10px auto 18px; }
+    .sheet-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 19px; }
+    .sheet-head small { color: var(--green); font-weight: 700; }
+    .sheet-head h2 { margin: 4px 0 0; font-size: 22px; }
+    .close-button { width: 38px; height: 38px; border: 0; border-radius: 12px; background: var(--sand); font-size: 19px; }
+    .field { display: grid; gap: 7px; margin-bottom: 15px; }
+    .field label { font-size: 13px; font-weight: 700; }
+    .field input, .field select { width: 100%; min-height: 50px; border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 0 14px; color: var(--ink); outline: none; }
+    .field input:focus, .field select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(52,115,91,.12); }
+    .field-hint { margin: -7px 0 16px; color: var(--muted); font-size: 12px; }
+    .error { min-height: 20px; color: var(--danger); font-size: 12px; }
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 9px; }
+    .secondary-button, .sheet-primary { min-height: 49px; border-radius: 14px; font-weight: 800; cursor: pointer; }
+    .secondary-button { border: 1px solid var(--line); background: transparent; }
+    .sheet-primary { border: 0; background: var(--green); color: white; }
+    .menu-list { display: grid; gap: 8px; }
+    .menu-action { min-height: 52px; border: 1px solid var(--line); border-radius: 14px; background: white; font-weight: 700; }
+    .menu-action.danger { color: var(--danger); }
+    .manage-copy { margin: -8px 0 15px; color: var(--muted); font-size: 12px; }
+    .manage-list { display: grid; gap: 8px; max-height: 48dvh; overflow-y: auto; }
+    .manage-row { min-height: 50px; border: 1px solid var(--line); border-radius: 13px; padding: 0 8px 0 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 9px; }
+    .manage-row span { display: grid; gap: 2px; }
+    .manage-row strong { font-size: 14px; }
+    .manage-row small { color: var(--muted); font-size: 11px; }
+    .rename-button { min-height: 34px; border: 0; border-radius: 10px; padding: 0 10px; background: var(--sand); color: var(--green-deep); font-size: 12px; font-weight: 700; }
+    .drag-mark { color: #a8b0ab; letter-spacing: -2px; }
+    .add-section-button { width: 100%; min-height: 46px; margin-top: 11px; border: 1px dashed #8aad9e; border-radius: 13px; background: transparent; color: var(--green-deep); font-weight: 700; }
+    .toast {
+      position: fixed; left: 50%; top: 18px; transform: translateX(-50%); z-index: 30;
+      width: min(calc(100% - 32px), 398px); padding: 12px 15px; border-radius: 13px;
+      background: var(--ink); color: white; font-size: 13px; text-align: center; box-shadow: 0 8px 24px rgba(15,28,22,.2);
+      pointer-events: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <main id="home-screen" class="screen home">
+      <div class="home-top"><span class="brand">带上</span><span class="quiet-label">我的清单</span></div>
+      <section class="home-copy">
+        <small>出门前，快速看一遍</small>
+        <h1>要检查哪张清单？</h1>
+        <p>点开清单，照着带就行</p>
+      </section>
+      <section class="scene-list" aria-label="出门清单">
+        <button class="scene-card" type="button" data-demo-scene="weekend">
+          <span class="scene-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 9V7.5a5 5 0 0 1 14 0V9"/><rect x="4" y="8" width="16" height="12" rx="4"/></svg></span>
+          <span class="scene-copy"><strong>周末出游</strong><span>18 件物品</span></span><span class="scene-arrow">›</span>
+        </button>
+        <button class="scene-card" type="button" data-demo-scene="business">
+          <span class="scene-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5h8v2M3 12h18"/></svg></span>
+          <span class="scene-copy"><strong>商务出差</strong><span>24 件物品</span></span><span class="scene-arrow">›</span>
+        </button>
+        <button class="scene-card" type="button" data-demo-scene="long-trip">
+          <span class="scene-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="3"/><path d="M9 4V2.5h6V4M9 8v9M15 8v9"/></svg></span>
+          <span class="scene-copy"><strong>一周旅行</strong><span><b>42 件物品</b> · 6 个分区</span></span><span class="scene-arrow">›</span>
+        </button>
+      </section>
+      <button class="new-list" type="button" id="new-list-button">＋ 新增一张清单</button>
+    </main>
+
+    <main id="checklist-screen" class="screen checklist" hidden>
+      <header class="checklist-head">
+        <button class="icon-button" id="back-button" type="button" aria-label="返回首页"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="title-block"><strong>一周旅行</strong><span id="header-meta">42 件物品 · 6 个分区</span></div>
+        <button class="icon-button" id="menu-button" type="button" aria-label="更多操作"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+      </header>
+
+      <section class="summary" aria-label="清单进度">
+        <div class="summary-line"><div class="summary-count"><strong id="checked-count">0</strong><span id="total-count"> / 42</span></div><span id="section-count" class="summary-meta">6 个分区</span></div>
+        <div class="progress-track"><div id="overall-progress" class="progress-bar"></div></div>
+      </section>
+
+      <section class="list-tools">
+        <div class="filter-row" role="group" aria-label="筛选物品">
+          <button class="filter-button is-active" type="button" data-filter="all">全部 <span id="all-count">42</span></button>
+          <button class="filter-button" type="button" data-filter="pending">未勾选 <span id="pending-count">42</span></button>
+        </div>
+        <nav id="section-nav" class="section-nav" aria-label="快速跳转到分区"></nav>
+      </section>
+
+      <section id="sections" class="sections" aria-label="分区物品清单"></section>
+
+      <div class="bottom-bar"><button class="primary-button" type="button" id="global-add-button">＋ 添加物品</button></div>
+    </main>
+  </div>
+
+  <dialog id="add-sheet" class="sheet">
+    <form id="add-form" class="sheet-panel" method="dialog">
+      <div class="sheet-handle"></div>
+      <header class="sheet-head"><div><small id="add-kicker">快速添加</small><h2 id="add-title">添加物品</h2></div><button class="close-button" type="button" data-close="add-sheet" aria-label="关闭">×</button></header>
+      <div class="field"><label for="item-name">物品名称</label><input id="item-name" name="itemName" autocomplete="off" placeholder="例如：运动相机" required></div>
+      <div class="field"><label for="section-select">放入分区</label><select id="section-select" name="sectionId"></select></div>
+      <p class="field-hint">从分区右侧的“＋”进入时，这里会自动选好。</p>
+      <div id="add-error" class="error" role="alert"></div>
+      <div class="sheet-actions"><button class="secondary-button" type="button" data-close="add-sheet">取消</button><button class="sheet-primary" type="submit">加入清单</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="menu-sheet" class="sheet">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <header class="sheet-head"><div><small>低频操作</small><h2>清单设置</h2></div><button class="close-button" type="button" data-close="menu-sheet" aria-label="关闭">×</button></header>
+      <div class="menu-list">
+        <button class="menu-action" id="manage-sections-button" type="button">管理分区</button>
+        <button class="menu-action danger" id="clear-button" type="button">清空全部勾选</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="manage-sheet" class="sheet">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <header class="sheet-head"><div><small>仅在需要整理时使用</small><h2>管理分区</h2></div><button class="close-button" type="button" data-close="manage-sheet" aria-label="关闭">×</button></header>
+      <p class="manage-copy">日常新增物品不需要进入这里；点击分区旁的“＋”即可直接添加。</p>
+      <div id="manage-list" class="manage-list"></div>
+      <button id="add-section-button" class="add-section-button" type="button">＋ 新增分区</button>
+    </div>
+  </dialog>
+
+  <dialog id="section-name-sheet" class="sheet" aria-labelledby="section-name-title">
+    <form id="section-name-form" class="sheet-panel" method="dialog">
+      <div class="sheet-handle"></div>
+      <header class="sheet-head"><div><small id="section-name-kicker">整理分区</small><h2 id="section-name-title">修改分区名称</h2></div><button id="section-name-close" class="close-button" type="button" aria-label="关闭">×</button></header>
+      <div class="field"><label for="section-name-input">分区名称</label><input id="section-name-input" autocomplete="off" required></div>
+      <div id="section-name-error" class="error" role="alert"></div>
+      <div class="sheet-actions"><button id="section-name-cancel" class="secondary-button" type="button">取消</button><button class="sheet-primary" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script type="module">
+    import * as Model from './option-a-state.mjs';
+
+    let state = Model.createInitialState();
+    let activeAddSectionId = 'other';
+    let toastTimer;
+
+    const homeScreen = document.getElementById('home-screen');
+    const checklistScreen = document.getElementById('checklist-screen');
+    const sectionsRoot = document.getElementById('sections');
+    const navRoot = document.getElementById('section-nav');
+    const addSheet = document.getElementById('add-sheet');
+    const menuSheet = document.getElementById('menu-sheet');
+    const manageSheet = document.getElementById('manage-sheet');
+    const manageList = document.getElementById('manage-list');
+    const sectionNameSheet = document.getElementById('section-name-sheet');
+    const sectionNameForm = document.getElementById('section-name-form');
+    const sectionNameInput = document.getElementById('section-name-input');
+    const sectionNameError = document.getElementById('section-name-error');
+    let sectionNameMode = 'rename';
+    let editingSectionId = null;
+    const addForm = document.getElementById('add-form');
+    const itemName = document.getElementById('item-name');
+    const sectionSelect = document.getElementById('section-select');
+    const addError = document.getElementById('add-error');
+
+    function iconCheck() {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 12 4 4 8-9"/></svg>';
+    }
+
+    function iconChevron() {
+      return '<svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>';
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function render() {
+      const overall = Model.getOverallProgress(state);
+      document.getElementById('checked-count').textContent = overall.checked;
+      document.getElementById('total-count').textContent = ` / ${overall.total}`;
+      document.getElementById('all-count').textContent = overall.total;
+      document.getElementById('pending-count').textContent = overall.total - overall.checked;
+      document.getElementById('overall-progress').style.width = `${overall.total ? overall.checked / overall.total * 100 : 0}%`;
+      document.getElementById('header-meta').textContent = `${overall.total} 件物品 · ${state.sections.length} 个分区`;
+      document.getElementById('section-count').textContent = `${state.sections.length} 个分区`;
+
+      document.querySelectorAll('[data-filter]').forEach((button) => {
+        button.classList.toggle('is-active', button.dataset.filter === state.filter);
+      });
+
+      navRoot.innerHTML = state.sections.map((section) => {
+        const progress = Model.getSectionProgress(state, section.id);
+        return `<button class="section-chip" type="button" data-jump-section="${escapeHtml(section.id)}">${escapeHtml(section.name)} <b>${progress.checked}/${progress.total}</b></button>`;
+      }).join('');
+
+      const visibleSections = Model.getVisibleSections(state);
+      if (!visibleSections.length) {
+        sectionsRoot.innerHTML = '<div class="empty-list"><strong>全部勾选完成</strong>切回“全部”可以查看完整清单</div>';
+        return;
+      }
+
+      sectionsRoot.innerHTML = visibleSections.map((section) => {
+        const canonical = state.sections.find((entry) => entry.id === section.id);
+        const progress = Model.getSectionProgress(state, section.id);
+        const complete = progress.total > 0 && progress.checked === progress.total;
+        const rows = section.items.map((item) => `<button class="item-row${item.checked ? ' is-checked' : ''}" type="button" data-item-id="${escapeHtml(item.id)}"><span class="checkmark" aria-hidden="true">${iconCheck()}</span><span class="item-name">${escapeHtml(item.name)}</span></button>`).join('');
+        return `<article class="section-block${canonical.collapsed ? ' is-collapsed' : ''}" id="section-${escapeHtml(section.id)}">
+          <div class="section-head">
+            <button class="icon-button" type="button" data-toggle-section="${escapeHtml(section.id)}" aria-label="${canonical.collapsed ? '展开' : '折叠'}${escapeHtml(section.name)}">${iconChevron()}</button>
+            <button class="section-title" type="button" data-toggle-section="${escapeHtml(section.id)}" style="border:0;background:transparent;text-align:left;padding:0"><strong>${escapeHtml(section.name)}</strong><span class="${complete ? 'is-complete' : ''}">${complete ? '本区已全部勾选' : `${progress.checked}/${progress.total} 已勾选`}</span></button>
+            <span class="section-mini-progress" aria-hidden="true"><i style="width:${progress.total ? progress.checked / progress.total * 100 : 0}%"></i></span>
+            <button class="section-add" type="button" data-add-section="${escapeHtml(section.id)}" aria-label="添加到${escapeHtml(section.name)}">＋</button>
+          </div>
+          <div class="item-list" ${canonical.collapsed ? 'hidden' : ''}>${rows || '<div class="empty-section">这个分区暂时没有物品</div>'}</div>
+        </article>`;
+      }).join('');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      window.clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.hidden = false;
+      toastTimer = window.setTimeout(() => { toast.hidden = true; }, 2200);
+    }
+
+    function renderManageSections() {
+      manageList.innerHTML = state.sections.map((section) => `<div class="manage-row"><span><strong>${escapeHtml(section.name)}</strong><small>${section.items.length} 件物品</small></span><button class="rename-button" type="button" data-rename-section="${escapeHtml(section.id)}">改名</button><i class="drag-mark" aria-label="拖动排序">⠿</i></div>`).join('');
+    }
+
+    function openSectionNameSheet(mode, section) {
+      sectionNameMode = mode;
+      editingSectionId = section?.id || null;
+      sectionNameError.textContent = '';
+      sectionNameInput.value = section?.name || '';
+      document.getElementById('section-name-kicker').textContent = mode === 'rename' ? '整理分区' : '保持结构简单';
+      document.getElementById('section-name-title').textContent = mode === 'rename' ? '修改分区名称' : '新增分区';
+      manageSheet.close();
+      sectionNameSheet.showModal();
+      requestAnimationFrame(() => sectionNameInput.focus());
+    }
+
+    function closeSectionNameSheet() {
+      sectionNameSheet.close();
+      renderManageSections();
+      manageSheet.showModal();
+    }
+
+    function openChecklist() {
+      homeScreen.hidden = true;
+      checklistScreen.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      render();
+    }
+
+    function openAddSheet(sectionId) {
+      activeAddSectionId = sectionId || 'other';
+      addForm.reset();
+      addError.textContent = '';
+      sectionSelect.innerHTML = state.sections.map((section) => `<option value="${escapeHtml(section.id)}">${escapeHtml(section.name)}</option>`).join('');
+      sectionSelect.value = activeAddSectionId;
+      const section = state.sections.find((entry) => entry.id === activeAddSectionId);
+      document.getElementById('add-kicker').textContent = sectionId ? '分区已自动选择' : '快速添加';
+      document.getElementById('add-title').textContent = sectionId ? `添加到${section.name}` : '添加物品';
+      addSheet.showModal();
+      requestAnimationFrame(() => itemName.focus());
+    }
+
+    document.querySelectorAll('[data-demo-scene]').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (button.dataset.demoScene !== 'long-trip') {
+          showToast('方案 A 重点演示 42 件物品的“一周旅行”');
+          return;
+        }
+        openChecklist();
+      });
+    });
+
+    document.getElementById('new-list-button').addEventListener('click', () => showToast('方案 A 先验证长清单的轻量分区'));
+    document.getElementById('back-button').addEventListener('click', () => {
+      checklistScreen.hidden = true;
+      homeScreen.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    document.getElementById('global-add-button').addEventListener('click', () => openAddSheet());
+    document.getElementById('menu-button').addEventListener('click', () => menuSheet.showModal());
+
+    checklistScreen.addEventListener('click', (event) => {
+      const itemButton = event.target.closest('[data-item-id]');
+      if (itemButton) {
+        state = Model.toggleItem(state, itemButton.dataset.itemId);
+        render();
+        return;
+      }
+      const filterButton = event.target.closest('[data-filter]');
+      if (filterButton) {
+        state = Model.setFilter(state, filterButton.dataset.filter);
+        render();
+        return;
+      }
+      const toggleButton = event.target.closest('[data-toggle-section]');
+      if (toggleButton) {
+        state = Model.toggleSection(state, toggleButton.dataset.toggleSection);
+        render();
+        return;
+      }
+      const addButton = event.target.closest('[data-add-section]');
+      if (addButton) {
+        openAddSheet(addButton.dataset.addSection);
+        return;
+      }
+      const jumpButton = event.target.closest('[data-jump-section]');
+      if (jumpButton) {
+        document.getElementById(`section-${jumpButton.dataset.jumpSection}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    addForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      try {
+        const chosenSection = sectionSelect.value || activeAddSectionId;
+        state = Model.addItem(state, { name: itemName.value, sectionId: chosenSection });
+        addSheet.close();
+        render();
+        showToast(`已加入${state.sections.find((section) => section.id === chosenSection).name}`);
+        requestAnimationFrame(() => document.getElementById(`section-${chosenSection}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      } catch (error) {
+        addError.textContent = error.message;
+      }
+    });
+
+    document.getElementById('clear-button').addEventListener('click', () => {
+      state = Model.clearChecks(state);
+      menuSheet.close();
+      render();
+      showToast('已清空勾选，清单内容没有改变');
+    });
+    document.getElementById('manage-sections-button').addEventListener('click', () => {
+      menuSheet.close();
+      renderManageSections();
+      manageSheet.showModal();
+    });
+    manageList.addEventListener('click', (event) => {
+      const renameButton = event.target.closest('[data-rename-section]');
+      if (!renameButton) return;
+      const section = state.sections.find((entry) => entry.id === renameButton.dataset.renameSection);
+      openSectionNameSheet('rename', section);
+    });
+    document.getElementById('add-section-button').addEventListener('click', () => {
+      openSectionNameSheet('add');
+    });
+    sectionNameForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      try {
+        state = sectionNameMode === 'rename'
+          ? Model.renameSection(state, editingSectionId, sectionNameInput.value)
+          : Model.addSection(state, sectionNameInput.value);
+        render();
+        closeSectionNameSheet();
+      } catch (error) {
+        sectionNameError.textContent = error.message;
+      }
+    });
+    document.getElementById('section-name-cancel').addEventListener('click', closeSectionNameSheet);
+    document.getElementById('section-name-close').addEventListener('click', closeSectionNameSheet);
+    document.addEventListener('click', (event) => {
+      const close = event.target.closest('[data-close]');
+      if (close) document.getElementById(close.dataset.close).close();
+    });
+
+    render();
+  </script>
+</body>
+</html>

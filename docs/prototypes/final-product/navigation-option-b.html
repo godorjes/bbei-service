@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2ea">
+  <title>带上 · 方案 B（清单与整理）</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f2ea;
+      --surface: #fffdf8;
+      --ink: #14221d;
+      --muted: #718078;
+      --line: #dedbd1;
+      --green: #34735b;
+      --green-deep: #245943;
+      --green-soft: #e2eee8;
+      --sand: #ebe8de;
+      --danger: #a3473c;
+      --shadow: 0 8px 30px rgba(30, 48, 40, .06);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { background: #dfddd5; }
+    body { margin: 0; color: var(--ink); background: #dfddd5; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(52, 115, 91, .25); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+    .app-shell { width: min(100%, 430px); min-height: 100dvh; margin: 0 auto; background: var(--paper); position: relative; overflow-x: hidden; box-shadow: 0 0 50px rgba(24, 38, 32, .08); }
+    .page { min-height: 100dvh; padding: 28px 16px 104px; }
+    .topline, .page-heading, .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .brand { color: var(--green); font-size: 22px; font-weight: 900; letter-spacing: .08em; }
+    .variant-mark { color: var(--muted); font-size: 12px; }
+    .hero { margin: 40px 2px 24px; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .11em; }
+    h1 { margin: 8px 0 7px; font-size: 30px; line-height: 1.18; letter-spacing: -.04em; }
+    .subtext { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .page-heading { margin: 34px 2px 22px; align-items: flex-end; }
+    .page-heading h1 { margin: 0 0 5px; font-size: 28px; }
+    .quiet-hint { border: 0; padding: 5px 0; color: var(--muted); background: transparent; font-size: 12px; cursor: pointer; }
+    .quiet-hint .dot, .unbound-dot { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: #c78b55; vertical-align: 1px; }
+    .scene-list, .manage-list { display: grid; gap: 12px; }
+    .scene-card, .manage-row { border: 1px solid var(--line); border-radius: 19px; background: var(--surface); box-shadow: var(--shadow); }
+    .scene-card { display: grid; grid-template-columns: 1fr 48px; overflow: hidden; }
+    .scene-open { min-height: 104px; padding: 16px 8px 16px 16px; border: 0; background: transparent; display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 14px; text-align: left; cursor: pointer; }
+    .scene-mark { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: var(--green-deep); background: var(--green-soft); font-size: 20px; font-weight: 900; }
+    .scene-copy, .manage-copy { display: grid; gap: 5px; min-width: 0; }
+    .scene-copy strong, .manage-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; }
+    .scene-copy span, .manage-copy span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .more-button { width: 48px; min-height: 48px; border: 0; border-left: 1px solid rgba(222, 219, 209, .75); background: transparent; color: var(--muted); font-size: 21px; cursor: pointer; }
+    .more-button:active, .scene-open:active, .manage-main:active { background: #f7f5ee; }
+    .outline-action { width: 100%; min-height: 55px; margin-top: 14px; border: 1px dashed #88aa9b; border-radius: 17px; background: transparent; color: var(--green-deep); font-weight: 800; cursor: pointer; }
+    .outline-action.list-create { margin: 0 0 14px; background: rgba(255, 253, 248, .48); }
+    .manage-row { display: grid; grid-template-columns: 1fr 48px; overflow: hidden; }
+    .manage-main { min-height: 76px; padding: 13px 8px 13px 15px; border: 0; background: transparent; display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 12px; text-align: left; cursor: pointer; }
+    .small-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--green-deep); background: var(--green-soft); font-size: 17px; font-weight: 900; }
+    .binding-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .unbound { color: #9c7048 !important; }
+    .bottom-nav { position: fixed; left: 50%; bottom: 0; z-index: 20; transform: translateX(-50%); width: min(100%, 430px); display: grid; grid-template-columns: repeat(3, 1fr); padding: 7px 10px calc(7px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255, 253, 248, .96); backdrop-filter: blur(16px); }
+    .bottom-nav.two { grid-template-columns: repeat(2, 1fr); }
+    .nav-button { min-height: 53px; border: 0; border-radius: 13px; background: transparent; color: var(--muted); display: grid; place-items: center; gap: 2px; cursor: pointer; }
+    .nav-button span:first-child { font-size: 19px; line-height: 1; }
+    .nav-button span:last-child { font-size: 11px; font-weight: 700; }
+    .nav-button.is-active { color: var(--green-deep); background: var(--green-soft); }
+    .segment { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 16px; border-radius: 14px; background: var(--sand); }
+    .segment button { min-height: 40px; border: 0; border-radius: 11px; background: transparent; color: var(--muted); font-weight: 800; cursor: pointer; }
+    .segment button.is-active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 10px rgba(29, 47, 39, .08); }
+    .checklist { min-height: 100dvh; padding-bottom: 104px; }
+    .check-top { position: sticky; top: 0; z-index: 10; padding: 12px; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; background: rgba(244, 242, 234, .95); backdrop-filter: blur(15px); }
+    .icon-button { width: 44px; height: 44px; border: 0; border-radius: 13px; background: transparent; display: grid; place-items: center; font-size: 23px; cursor: pointer; }
+    .check-title { min-width: 0; text-align: center; }
+    .check-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; }
+    .check-title span { color: var(--muted); font-size: 11px; }
+    .summary { margin: 3px 15px 13px; padding: 18px; border-radius: 20px; background: var(--green-deep); color: #fff; }
+    .summary-count { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+    .summary-count strong { font-size: 32px; line-height: 1; }
+    .summary-count span { opacity: .75; font-size: 12px; }
+    .progress { height: 5px; margin-top: 14px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.2); }
+    .progress i { display: block; height: 100%; border-radius: inherit; background: #fff; transition: width .2s ease; }
+    .section-stack { display: grid; gap: 12px; padding: 0 11px 22px; }
+    .section-card { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--surface); }
+    .section-head { min-height: 58px; padding: 9px 14px; display: flex; align-items: center; justify-content: space-between; background: #fbfaf5; }
+    .section-head strong { font-size: 15px; }
+    .section-head span { color: var(--muted); font-size: 11px; }
+    .item-row { min-height: 54px; display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--line); }
+    .item-toggle { min-height: 54px; padding: 8px 14px; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; }
+    .check-circle { width: 23px; height: 23px; flex: 0 0 auto; display: grid; place-items: center; border: 1.5px solid #aab5af; border-radius: 50%; color: transparent; font-size: 14px; }
+    .item-toggle.is-checked .check-circle { border-color: var(--green); background: var(--green); color: #fff; }
+    .item-toggle.is-checked .item-name { color: #87918c; text-decoration: line-through; }
+    .check-actions { position: fixed; left: 50%; bottom: 0; z-index: 20; transform: translateX(-50%); width: min(100%, 430px); display: grid; grid-template-columns: 1fr auto; gap: 9px; padding: 10px 15px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,253,248,.96); backdrop-filter: blur(16px); }
+    .primary-action, .secondary-action { min-height: 51px; border-radius: 15px; font-weight: 900; cursor: pointer; }
+    .primary-action { border: 0; padding: 0 22px; background: var(--green); color: #fff; }
+    .secondary-action { border: 1px solid var(--line); padding: 0 16px; background: var(--surface); color: var(--green-deep); }
+    .empty { padding: 42px 18px; border: 1px dashed #a9b9b1; border-radius: 18px; color: var(--muted); text-align: center; font-size: 13px; }
+    dialog { width: min(calc(100% - 22px), 408px); max-height: min(82dvh, 660px); margin: auto auto 10px; padding: 0; border: 0; border-radius: 24px; color: var(--ink); background: var(--surface); box-shadow: 0 22px 80px rgba(18,35,28,.25); }
+    dialog::backdrop { background: rgba(20,34,29,.34); backdrop-filter: blur(2px); }
+    .sheet { padding: 10px 18px calc(19px + env(safe-area-inset-bottom)); }
+    .sheet-grip { width: 36px; height: 4px; margin: 0 auto 16px; border-radius: 99px; background: #d8d5cb; }
+    .sheet-kicker { color: var(--green); font-size: 11px; font-weight: 900; letter-spacing: .1em; }
+    .sheet h2 { margin: 6px 0 18px; font-size: 23px; }
+    .field { display: grid; gap: 7px; margin-bottom: 17px; }
+    .field > span, .choices legend { font-size: 12px; font-weight: 800; }
+    .field input[type="text"] { width: 100%; min-height: 48px; padding: 0 13px; border: 1px solid var(--line); border-radius: 13px; background: #fff; color: var(--ink); }
+    .choices { margin: 0 0 18px; padding: 0; border: 0; }
+    .choices legend { margin-bottom: 5px; }
+    .choice-note { display: block; margin-bottom: 9px; color: var(--muted); font-size: 11px; }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .choice { min-height: 42px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .choice input { accent-color: var(--green); }
+    .scene-choice { grid-column: 1 / -1; justify-content: space-between; }
+    .choice-label { min-width: 0; display: flex; align-items: center; gap: 8px; }
+    .order-actions { display: flex; gap: 4px; }
+    .order-button { width: 32px; height: 30px; border: 0; border-radius: 9px; background: var(--sand); color: var(--green-deep); cursor: pointer; }
+    .order-button:disabled { opacity: .28; cursor: default; }
+    .item-search-wrap { display: grid; gap: 6px; margin-bottom: 12px; }
+    .item-search-wrap span { color: var(--muted); font-size: 11px; }
+    .item-search { width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); }
+    .form-error { min-height: 18px; margin: -5px 0 8px; color: var(--danger); font-size: 12px; }
+    .sheet-actions { display: flex; gap: 9px; }
+    .sheet-actions button { min-height: 49px; border-radius: 14px; font-weight: 900; cursor: pointer; }
+    .cancel-button { border: 1px solid var(--line); padding: 0 18px; background: transparent; }
+    .save-button { flex: 1; border: 0; background: var(--green); color: #fff; }
+    .delete-button { margin-right: auto; border: 0; padding: 0 14px; background: transparent; color: var(--danger); }
+    .confirm-card { padding: 22px 19px calc(19px + env(safe-area-inset-bottom)); }
+    .confirm-card h2 { margin: 0 0 9px; font-size: 21px; }
+    .confirm-card p { margin: 0 0 20px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .confirm-actions button { min-height: 48px; border-radius: 14px; font-weight: 900; cursor: pointer; }
+    .confirm-delete { border: 0; background: var(--danger); color: #fff; }
+    .toast { position: fixed; left: 50%; bottom: 91px; z-index: 40; transform: translateX(-50%); width: max-content; max-width: calc(100% - 36px); padding: 10px 15px; border-radius: 12px; background: #203a30; color: #fff; font-size: 12px; box-shadow: 0 10px 35px rgba(20,34,29,.24); }
+    @media (min-width: 431px) { dialog { margin-bottom: 22px; } }
+  </style>
+</head>
+<body data-variant="b">
+  <main id="app" class="app-shell" aria-live="polite"></main>
+  <dialog id="editor-dialog" aria-labelledby="editor-title">
+    <form id="editor-form" class="sheet" method="dialog">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <span id="editor-kicker" class="sheet-kicker"></span>
+      <h2 id="editor-title"></h2>
+      <label class="field"><span id="name-label"></span><input id="name-input" name="name" type="text" maxlength="30" autocomplete="off"></label>
+      <datalist id="item-suggestions"></datalist>
+      <fieldset id="binding-field" class="choices">
+        <legend id="binding-title"></legend>
+        <span id="binding-note" class="choice-note"></span>
+        <div id="binding-options" class="choice-grid"></div>
+      </fieldset>
+      <p id="form-error" class="form-error" role="alert"></p>
+      <div class="sheet-actions"><button id="delete-editor" class="delete-button" type="button" hidden>删除</button><button id="cancel-editor" class="cancel-button" type="button">取消</button><button class="save-button" type="submit">保存</button></div>
+    </form>
+  </dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title">
+    <section class="confirm-card">
+      <h2 id="confirm-title">确认删除？</h2>
+      <p id="confirm-message"></p>
+      <div class="confirm-actions"><button id="cancel-delete" class="cancel-button" type="button">取消</button><button id="confirm-delete" class="confirm-delete" type="button">确认删除</button></div>
+    </section>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script>
+    (() => {
+      const variant = document.body.dataset.variant;
+      const storageKey = `bibei-navigation-${variant}-v1`;
+      const clone = value => JSON.parse(JSON.stringify(value));
+      const esc = value => String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
+      const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+      const normalizeName = value => String(value ?? '').trim().toLocaleLowerCase('zh-CN').replace(/\s+/g, '');
+      const seed = {
+        scenes: [
+          { id: 'weekend', name: '周末出游', sectionIds: ['important', 'digital', 'clothes', 'daily'], checkedItemIds: [] },
+          { id: 'business', name: '商务出差', sectionIds: ['important', 'work', 'digital', 'clothes', 'wash'], checkedItemIds: [] },
+          { id: 'week-trip', name: '一周旅行', sectionIds: ['important', 'digital', 'clothes', 'wash', 'health', 'daily'], checkedItemIds: [] }
+        ],
+        sections: [
+          { id: 'important', name: '重要物品' }, { id: 'digital', name: '电子设备' }, { id: 'work', name: '工作资料' }, { id: 'clothes', name: '衣物' }, { id: 'wash', name: '洗护用品' }, { id: 'health', name: '药品与健康' }, { id: 'daily', name: '随身与其他' }
+        ],
+        items: [
+          ['phone','手机',['important','digital']], ['keys','钥匙',['important']], ['wallet','钱包',['important']], ['id-card','身份证',['important']], ['tissue','纸巾',['important','health']],
+          ['power-bank','充电宝',['digital']], ['phone-charger','手机充电器',['digital']], ['cable','数据线',['digital']], ['earphone','耳机',['digital']], ['camera','相机',['digital']], ['laptop','笔记本电脑',['digital','work']], ['laptop-charger','电脑充电器',['digital','work']], ['adapter','转换插头',['digital']],
+          ['work-card','工作证',['work']], ['name-card','名片',['work']], ['meeting','会议资料',['work']], ['contract','合同文件',['work']], ['pen','签字笔',['work']],
+          ['tops','上衣 × 5',['clothes']], ['pants','裤子 × 3',['clothes']], ['underwear','内衣 × 7',['clothes']], ['socks','袜子 × 7',['clothes']], ['pajamas','睡衣',['clothes']], ['coat','外套',['clothes']], ['shoes','步行鞋',['clothes']], ['slippers','拖鞋',['clothes']], ['hat','帽子',['clothes']], ['raincoat','轻便雨衣',['clothes']], ['laundry-bag','脏衣袋',['clothes']],
+          ['toothbrush','牙刷',['wash']], ['toothpaste','牙膏',['wash']], ['cleanser','洗面奶',['wash']], ['shampoo','洗发水',['wash']], ['towel','毛巾',['wash']], ['skincare','护肤品',['wash']], ['razor','剃须刀',['wash']],
+          ['medicine','常用药',['health']], ['cold-medicine','感冒药',['health']], ['bandage','创可贴',['health']], ['mask','口罩',['health']],
+          ['umbrella','雨伞',['daily']], ['cup','水杯',['daily']], ['snack','零食',['daily']], ['book','书',['daily']], ['folding-bag','折叠购物袋',['daily']], ['action-camera','运动相机',[]]
+        ].map(([id, name, sectionIds]) => ({ id, name, sectionIds }))
+      };
+      let state;
+      try { state = JSON.parse(localStorage.getItem(storageKey)) || clone(seed); } catch (_) { state = clone(seed); }
+      const ui = { view: variant === 'a' ? 'scenes' : 'checklists', organizeTab: 'sections', sceneId: null, editor: null, itemQuery: '' };
+      const app = document.getElementById('app');
+      const dialog = document.getElementById('editor-dialog');
+      const confirmDialog = document.getElementById('confirm-dialog');
+      const form = document.getElementById('editor-form');
+      const bindingOptions = document.getElementById('binding-options');
+      let toastTimer;
+      let pendingDelete = null;
+      const save = () => localStorage.setItem(storageKey, JSON.stringify(state));
+      const showToast = (message, duration = 2100) => { const toast = document.getElementById('toast'); window.clearTimeout(toastTimer); toast.textContent = message; toast.hidden = false; toastTimer = window.setTimeout(() => { toast.hidden = true; }, duration); };
+      const sceneById = id => state.scenes.find(scene => scene.id === id);
+      const sectionById = id => state.sections.find(section => section.id === id);
+      const itemById = id => state.items.find(item => item.id === id);
+      const itemByName = name => state.items.find(item => normalizeName(item.name) === normalizeName(name));
+      const buildSceneSections = scene => {
+        const seen = new Set();
+        return scene.sectionIds.map(sectionId => {
+          const section = sectionById(sectionId);
+          if (!section) return null;
+          const items = state.items.filter(item => item.sectionIds.includes(sectionId) && !seen.has(item.id));
+          items.forEach(item => seen.add(item.id));
+          return { section, items };
+        }).filter(Boolean);
+      };
+      const sceneItemCount = scene => buildSceneSections(scene).reduce((sum, entry) => sum + entry.items.length, 0);
+      const pageTop = label => `<div class="topline"><span class="brand">带上</span><span class="variant-mark">方案 ${variant.toUpperCase()} · ${label}</span></div>`;
+      const renderNav = () => variant === 'a'
+        ? `<nav class="bottom-nav" aria-label="主要导航"><button class="nav-button${ui.view === 'scenes' ? ' is-active' : ''}" type="button" data-action="navigate" data-view="scenes" data-testid="nav-scenes"><span aria-hidden="true">◫</span><span>场景</span></button><button class="nav-button${ui.view === 'sections' ? ' is-active' : ''}" type="button" data-action="navigate" data-view="sections" data-testid="nav-sections"><span aria-hidden="true">≡</span><span>分区</span></button><button class="nav-button${ui.view === 'items' ? ' is-active' : ''}" type="button" data-action="navigate" data-view="items" data-testid="nav-items"><span aria-hidden="true">✓</span><span>物品</span></button></nav>`
+        : `<nav class="bottom-nav two" aria-label="主要导航"><button class="nav-button${ui.view === 'checklists' ? ' is-active' : ''}" type="button" data-action="navigate" data-view="checklists" data-testid="nav-checklists"><span aria-hidden="true">◫</span><span>清单</span></button><button class="nav-button${ui.view === 'organize' ? ' is-active' : ''}" type="button" data-action="navigate" data-view="organize" data-testid="nav-organize"><span aria-hidden="true">≡</span><span>整理</span></button></nav>`;
+      function renderScenes() {
+        const cards = state.scenes.map(scene => {
+          const total = sceneItemCount(scene);
+          const checked = scene.checkedItemIds.filter(id => buildSceneSections(scene).some(entry => entry.items.some(item => item.id === id))).length;
+          return `<article class="scene-card"><button class="scene-open" type="button" data-action="open-scene" data-id="${esc(scene.id)}" data-testid="open-${esc(scene.id)}"><span class="scene-mark" aria-hidden="true">${esc(Array.from(scene.name)[0])}</span><span class="scene-copy"><strong>${esc(scene.name)}</strong><span>${total} 件物品 · ${scene.sectionIds.length} 个分区${checked ? ` · ${checked} 件已勾选` : ''}</span></span></button><button class="more-button" type="button" data-action="edit-scene" data-id="${esc(scene.id)}" aria-label="管理${esc(scene.name)}">⋯</button></article>`;
+        }).join('');
+        app.innerHTML = `<section class="page">${pageTop(variant === 'a' ? '三个入口' : '清单与整理')}<div class="hero"><span class="eyebrow">出门前，快速看一遍</span><h1>这次要检查哪张清单？</h1><p class="subtext">打开对应场景，直接照着逐项确认</p></div><div class="scene-list">${cards || '<div class="empty">还没有场景</div>'}</div><button class="outline-action" type="button" data-action="new-scene" data-testid="new-scene">＋ 新建场景</button></section>${renderNav()}`;
+      }
+      function sectionMeta(section) { const itemCount = state.items.filter(item => item.sectionIds.includes(section.id)).length; const sceneNames = state.scenes.filter(scene => scene.sectionIds.includes(section.id)).map(scene => scene.name); return { itemCount, sceneNames }; }
+      function sectionRows() {
+        return state.sections.map(section => { const meta = sectionMeta(section); const binding = meta.sceneNames.length ? meta.sceneNames.join('、') : '暂未绑定场景'; return `<article class="manage-row"><button class="manage-main" type="button" data-action="edit-section" data-id="${esc(section.id)}"><span class="small-mark" aria-hidden="true">区</span><span class="manage-copy"><strong>${esc(section.name)}</strong><span>${meta.itemCount} 件物品</span><span class="binding-line${meta.sceneNames.length ? '' : ' unbound'}">${esc(binding)}</span></span></button><button class="more-button" type="button" data-action="edit-section" data-id="${esc(section.id)}" aria-label="编辑${esc(section.name)}">›</button></article>`; }).join('');
+      }
+      function visibleItems() {
+        const query = normalizeName(ui.itemQuery);
+        return query ? state.items.filter(item => normalizeName(item.name).includes(query)) : state.items;
+      }
+      function itemRows() {
+        const rows = visibleItems().map(item => { const names = item.sectionIds.map(id => sectionById(id)?.name).filter(Boolean); return `<article class="manage-row"><button class="manage-main" type="button" data-action="edit-item" data-id="${esc(item.id)}"><span class="small-mark" aria-hidden="true">${names.length ? '物' : '<i class="unbound-dot"></i>'}</span><span class="manage-copy"><strong>${esc(item.name)}</strong><span class="binding-line${names.length ? '' : ' unbound'}">${names.length ? esc(names.join('、')) : '未绑定分区'}</span></span></button><button class="more-button" type="button" data-action="edit-item" data-id="${esc(item.id)}" aria-label="编辑${esc(item.name)}">›</button></article>`; }).join('');
+        return rows || '<div class="empty">没有找到对应物品</div>';
+      }
+      function renderSections(embedded = false) {
+        const content = `<button class="outline-action list-create" type="button" data-action="new-section" data-testid="new-section">＋ 新建分区</button><div class="manage-list">${sectionRows()}</div>`;
+        if (embedded) return content;
+        app.innerHTML = `<section class="page">${pageTop('分区')}<div class="page-heading"><div><h1>分区</h1><p class="subtext">分区独立存在，可绑定多个场景</p></div></div>${content}</section>${renderNav()}`;
+      }
+      function renderItems(embedded = false) {
+        const unbound = state.items.filter(item => item.sectionIds.length === 0).length;
+        const content = `<label class="item-search-wrap"><input id="item-search" class="item-search" type="search" value="${esc(ui.itemQuery)}" placeholder="搜索物品" data-testid="item-search"><span id="item-search-count">${visibleItems().length} 件物品</span></label><button class="outline-action list-create" type="button" data-action="new-item" data-testid="new-item">＋ 新建物品</button><div id="item-list" class="manage-list">${itemRows()}</div>`;
+        if (embedded) return content;
+        app.innerHTML = `<section class="page">${pageTop('物品')}<div class="page-heading"><div><h1>物品</h1><p class="subtext">一个物品可以绑定多个分区</p></div>${unbound ? `<button class="quiet-hint" type="button" data-action="show-unbound"><span class="dot"></span>${unbound} 个未绑定</button>` : ''}</div>${content}</section>${renderNav()}`;
+      }
+      function renderOrganize() {
+        const unbound = state.items.filter(item => item.sectionIds.length === 0).length;
+        app.innerHTML = `<section class="page">${pageTop('清单与整理')}<div class="page-heading"><div><h1>整理</h1><p class="subtext">平时无需进入，需要维护内容时再来</p></div>${ui.organizeTab === 'items' && unbound ? `<button class="quiet-hint" type="button" data-action="show-unbound"><span class="dot"></span>${unbound} 个未绑定</button>` : ''}</div><div class="segment" aria-label="整理内容"><button type="button" class="${ui.organizeTab === 'sections' ? 'is-active' : ''}" data-action="organize-tab" data-tab="sections" data-testid="organize-sections">分区</button><button type="button" class="${ui.organizeTab === 'items' ? 'is-active' : ''}" data-action="organize-tab" data-tab="items" data-testid="organize-items">物品</button></div>${ui.organizeTab === 'sections' ? renderSections(true) : renderItems(true)}</section>${renderNav()}`;
+      }
+      function renderChecklist() {
+        const scene = sceneById(ui.sceneId);
+        if (!scene) { ui.view = variant === 'a' ? 'scenes' : 'checklists'; return render(); }
+        const sections = buildSceneSections(scene);
+        const allItems = sections.flatMap(entry => entry.items);
+        scene.checkedItemIds = scene.checkedItemIds.filter(id => allItems.some(item => item.id === id));
+        const checked = scene.checkedItemIds.length;
+        const total = allItems.length;
+        const sectionHtml = sections.map(({ section, items }) => `<article class="section-card"><header class="section-head"><strong>${esc(section.name)}</strong><span>${items.filter(item => scene.checkedItemIds.includes(item.id)).length}/${items.length} 已勾选</span></header>${items.map(item => { const isChecked = scene.checkedItemIds.includes(item.id); return `<div class="item-row"><button class="item-toggle${isChecked ? ' is-checked' : ''}" type="button" data-action="toggle-item" data-id="${esc(item.id)}" aria-pressed="${isChecked}"><span class="check-circle" aria-hidden="true">✓</span><span class="item-name">${esc(item.name)}</span></button></div>`; }).join('') || '<div class="empty">这个分区暂时没有物品</div>'}</article>`).join('');
+        app.innerHTML = `<section class="checklist"><header class="check-top"><button class="icon-button" type="button" data-action="back" aria-label="返回">‹</button><div class="check-title"><strong>${esc(scene.name)}</strong><span>${total} 件物品 · ${sections.length} 个分区</span></div><button class="icon-button" type="button" data-action="edit-scene" data-id="${esc(scene.id)}" aria-label="管理场景">⋯</button></header><section class="summary"><div class="summary-count"><strong>${checked} / ${total}</strong><span>${total === checked && total ? '已全部准备好' : `还有 ${total - checked} 件未确认`}</span></div><div class="progress"><i style="width:${total ? checked / total * 100 : 0}%"></i></div></section><div class="section-stack">${sectionHtml || '<div class="empty">这个场景还没有绑定分区</div>'}</div><div class="check-actions"><button class="primary-action" type="button" data-action="new-item-in-scene" data-testid="global-add-item">＋ 添加物品</button><button class="secondary-action" type="button" data-action="reset-checks" data-testid="reset-list">重新准备</button></div></section>`;
+      }
+      function render() {
+        if (ui.view === 'checklist') return renderChecklist();
+        if (ui.view === 'scenes' || ui.view === 'checklists') return renderScenes();
+        if (ui.view === 'sections') return renderSections();
+        if (ui.view === 'items') return renderItems();
+        return renderOrganize();
+      }
+      function renderBindingOptions() {
+        const editor = ui.editor;
+        if (editor.type !== 'scene') {
+          bindingOptions.innerHTML = editor.options.map(option => `<label class="choice"><input type="checkbox" name="binding" value="${esc(option.id)}" ${editor.selected.includes(option.id) ? 'checked' : ''}><span>${esc(option.name)}</span></label>`).join('');
+          return;
+        }
+        const orderedIds = [...editor.bindingOrder, ...editor.options.map(option => option.id).filter(id => !editor.bindingOrder.includes(id))];
+        bindingOptions.innerHTML = orderedIds.map(id => {
+          const option = editor.options.find(entry => entry.id === id);
+          const index = editor.bindingOrder.indexOf(id);
+          const selected = index >= 0;
+          return `<div class="choice scene-choice"><label class="choice-label"><input type="checkbox" name="binding" value="${esc(id)}" ${selected ? 'checked' : ''}><span>${esc(option.name)}</span></label>${selected ? `<span class="order-actions"><button class="order-button" type="button" data-action="move-binding" data-id="${esc(id)}" data-direction="-1" aria-label="${esc(option.name)}上移" ${index === 0 ? 'disabled' : ''}>↑</button><button class="order-button" type="button" data-action="move-binding" data-id="${esc(id)}" data-direction="1" aria-label="${esc(option.name)}下移" ${index === editor.bindingOrder.length - 1 ? 'disabled' : ''}>↓</button></span>` : ''}</div>`;
+        }).join('');
+      }
+
+      function openEditor(type, id = null, sceneContext = null) {
+        let config;
+        let entity = null;
+        if (type === 'scene') {
+          entity = id ? sceneById(id) : null;
+          config = { kicker: '场景与分区', title: id ? '编辑场景' : '新建场景', label: '场景名称', bindingTitle: '使用哪些分区', bindingNote: '至少选择一个；可上下调整显示顺序', options: state.sections, selected: entity ? [...entity.sectionIds] : ['important'] };
+        } else if (type === 'section') {
+          entity = id ? sectionById(id) : null;
+          config = { kicker: '独立分区', title: id ? '编辑分区' : '新建分区', label: '分区名称', bindingTitle: '出现在哪些场景', bindingNote: '可以暂不绑定场景', options: state.scenes, selected: id ? state.scenes.filter(scene => scene.sectionIds.includes(id)).map(scene => scene.id) : [] };
+        } else {
+          entity = id ? itemById(id) : null;
+          const contextScene = sceneContext ? sceneById(sceneContext) : null;
+          const contextSections = contextScene ? contextScene.sectionIds.map(sectionById).filter(Boolean) : state.sections;
+          config = { kicker: sceneContext ? '从物品库添加' : '独立物品', title: id ? '编辑物品' : sceneContext ? '添加物品' : '新建物品', label: sceneContext ? '搜索或输入物品名称' : '物品名称', bindingTitle: '绑定到哪些分区', bindingNote: sceneContext ? '如果物品已存在，会直接使用，不会重复创建' : '可多选，也可以暂时不绑定', options: contextSections, selected: entity ? [...entity.sectionIds] : (contextScene ? [contextScene.sectionIds[0]].filter(Boolean) : []) };
+        }
+
+        ui.editor = { type, id, sceneContext, options: config.options, selected: [...config.selected], bindingOrder: type === 'scene' ? [...config.selected] : [] };
+        document.getElementById('editor-kicker').textContent = config.kicker;
+        document.getElementById('editor-title').textContent = config.title;
+        document.getElementById('name-label').textContent = config.label;
+        const nameInput = document.getElementById('name-input');
+        nameInput.value = entity?.name || '';
+        nameInput.placeholder = type === 'scene' ? '例如：露营' : type === 'section' ? '例如：户外用品' : '例如：运动相机';
+        if (type === 'item') nameInput.setAttribute('list', 'item-suggestions'); else nameInput.removeAttribute('list');
+        document.getElementById('item-suggestions').innerHTML = type === 'item' ? state.items.map(item => `<option value="${esc(item.name)}"></option>`).join('') : '';
+        document.getElementById('binding-title').textContent = config.bindingTitle;
+        document.getElementById('binding-note').textContent = config.bindingNote;
+        document.getElementById('delete-editor').hidden = !id;
+        document.getElementById('form-error').textContent = '';
+        renderBindingOptions();
+        dialog.showModal();
+        requestAnimationFrame(() => nameInput.focus());
+      }
+
+      function submitEditor() {
+        const name = document.getElementById('name-input').value.trim();
+        const { type, id, sceneContext } = ui.editor;
+        const selected = type === 'scene' ? [...ui.editor.bindingOrder] : Array.from(form.querySelectorAll('input[name="binding"]:checked')).map(input => input.value);
+        const error = document.getElementById('form-error');
+        if (!name) { error.textContent = '请填写名称'; return; }
+        if (type === 'scene' && selected.length === 0) { error.textContent = '场景至少需要一个分区'; return; }
+        if (type === 'scene') {
+          if (id) { const scene = sceneById(id); scene.name = name; scene.sectionIds = selected; }
+          else state.scenes.push({ id: uid('scene'), name, sectionIds: selected, checkedItemIds: [] });
+        }
+        if (type === 'section') {
+          let sectionId = id;
+          if (id) sectionById(id).name = name; else { sectionId = uid('section'); state.sections.push({ id: sectionId, name }); }
+          state.scenes.forEach(scene => { const shouldBind = selected.includes(scene.id); const isBound = scene.sectionIds.includes(sectionId); if (shouldBind && !isBound) scene.sectionIds.push(sectionId); if (!shouldBind && isBound) scene.sectionIds = scene.sectionIds.filter(value => value !== sectionId); });
+        }
+        let feedback = '已保存';
+        if (type === 'item') {
+          const duplicate = itemByName(name);
+          if (id) {
+            if (duplicate && duplicate.id !== id) { error.textContent = '这个物品已存在，可以直接编辑它的分区'; return; }
+            const item = itemById(id); item.name = name; item.sectionIds = selected;
+          } else if (duplicate) {
+            if (!sceneContext) { error.textContent = '这个物品已存在，可以直接编辑它的分区'; return; }
+            if (selected.length === 0) { error.textContent = '请至少选择一个当前场景的分区'; return; }
+            const scene = sceneById(sceneContext);
+            const alreadyVisible = buildSceneSections(scene).some(entry => entry.items.some(item => item.id === duplicate.id));
+            duplicate.sectionIds = [...new Set([...duplicate.sectionIds, ...selected])];
+            feedback = alreadyVisible ? '这个物品已经在当前清单中' : '已从物品库加入清单';
+          } else {
+            if (sceneContext && selected.length === 0) { error.textContent = '请至少选择一个当前场景的分区'; return; }
+            state.items.push({ id: uid('item'), name, sectionIds: selected });
+            if (selected.length === 0) feedback = '已保存，暂未绑定分区';
+          }
+        }
+        save();
+        dialog.close();
+        render();
+        showToast(feedback);
+      }
+
+      function requestDelete() {
+        const { type, id } = ui.editor;
+        const entity = type === 'scene' ? sceneById(id) : type === 'section' ? sectionById(id) : itemById(id);
+        if (!entity) return;
+        pendingDelete = { type, id };
+        let message = `删除“${entity.name}”？`;
+        if (type === 'scene') message += '物品和分区不会删除。';
+        if (type === 'section') { const count = state.items.filter(item => item.sectionIds.includes(id)).length; message += `${count} 件物品会保留；没有其他分区的物品将变成未绑定。`; }
+        if (type === 'item') message += '它会从所有场景清单中移除。';
+        document.getElementById('confirm-message').textContent = message;
+        dialog.close();
+        confirmDialog.showModal();
+      }
+
+      function performDelete() {
+        if (!pendingDelete) return;
+        const { type, id } = pendingDelete;
+        if (type === 'scene') {
+          state.scenes = state.scenes.filter(scene => scene.id !== id);
+          if (ui.sceneId === id) { ui.sceneId = null; ui.view = variant === 'a' ? 'scenes' : 'checklists'; }
+        }
+        if (type === 'section') {
+          state.sections = state.sections.filter(section => section.id !== id);
+          state.scenes.forEach(scene => { scene.sectionIds = scene.sectionIds.filter(sectionId => sectionId !== id); });
+          state.items.forEach(item => { item.sectionIds = item.sectionIds.filter(sectionId => sectionId !== id); });
+        }
+        if (type === 'item') {
+          state.items = state.items.filter(item => item.id !== id);
+          state.scenes.forEach(scene => { scene.checkedItemIds = scene.checkedItemIds.filter(itemId => itemId !== id); });
+        }
+        pendingDelete = null;
+        save();
+        confirmDialog.close();
+        render();
+        showToast('已删除');
+      }
+      app.addEventListener('click', event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'navigate') { ui.view = button.dataset.view; render(); window.scrollTo(0, 0); }
+        if (action === 'organize-tab') { ui.organizeTab = button.dataset.tab; render(); }
+        if (action === 'open-scene') { ui.sceneId = button.dataset.id; ui.view = 'checklist'; render(); window.scrollTo(0, 0); }
+        if (action === 'back') { ui.view = variant === 'a' ? 'scenes' : 'checklists'; render(); }
+        if (action === 'new-scene') openEditor('scene');
+        if (action === 'edit-scene') openEditor('scene', button.dataset.id);
+        if (action === 'new-section') openEditor('section');
+        if (action === 'edit-section') openEditor('section', button.dataset.id);
+        if (action === 'new-item') openEditor('item');
+        if (action === 'new-item-in-scene') openEditor('item', null, ui.sceneId);
+        if (action === 'edit-item') openEditor('item', button.dataset.id);
+        if (action === 'show-unbound') showToast('小圆点表示物品还没有绑定分区');
+        if (action === 'reset-checks') { const scene = sceneById(ui.sceneId); scene.checkedItemIds = []; save(); render(); showToast('已清空，可以重新准备'); }
+        if (action === 'toggle-item') {
+          const scene = sceneById(ui.sceneId); const itemId = button.dataset.id;
+          scene.checkedItemIds = scene.checkedItemIds.includes(itemId) ? scene.checkedItemIds.filter(id => id !== itemId) : [...scene.checkedItemIds, itemId];
+          save(); const total = sceneItemCount(scene); const complete = total > 0 && scene.checkedItemIds.filter(id => buildSceneSections(scene).some(entry => entry.items.some(item => item.id === id))).length === total; render(); if (complete) showToast('已全部准备好', 3000);
+        }
+      });
+      app.addEventListener('input', event => {
+        if (event.target.id !== 'item-search') return;
+        ui.itemQuery = event.target.value;
+        const list = document.getElementById('item-list');
+        const count = document.getElementById('item-search-count');
+        if (list) list.innerHTML = itemRows();
+        if (count) count.textContent = `${visibleItems().length} 件物品`;
+      });
+      bindingOptions.addEventListener('change', event => {
+        if (ui.editor?.type !== 'scene') return;
+        const input = event.target.closest('input[name="binding"]');
+        if (!input) return;
+        if (input.checked && !ui.editor.bindingOrder.includes(input.value)) ui.editor.bindingOrder.push(input.value);
+        if (!input.checked) ui.editor.bindingOrder = ui.editor.bindingOrder.filter(id => id !== input.value);
+        renderBindingOptions();
+      });
+      bindingOptions.addEventListener('click', event => {
+        const button = event.target.closest('button[data-action="move-binding"]');
+        if (!button || button.disabled || ui.editor?.type !== 'scene') return;
+        event.preventDefault();
+        const index = ui.editor.bindingOrder.indexOf(button.dataset.id);
+        const target = index + Number(button.dataset.direction);
+        if (index < 0 || target < 0 || target >= ui.editor.bindingOrder.length) return;
+        [ui.editor.bindingOrder[index], ui.editor.bindingOrder[target]] = [ui.editor.bindingOrder[target], ui.editor.bindingOrder[index]];
+        renderBindingOptions();
+      });
+      form.addEventListener('submit', event => { event.preventDefault(); submitEditor(); });
+      document.getElementById('cancel-editor').addEventListener('click', () => dialog.close());
+      document.getElementById('delete-editor').addEventListener('click', requestDelete);
+      document.getElementById('cancel-delete').addEventListener('click', () => { confirmDialog.close(); pendingDelete = null; dialog.showModal(); });
+      document.getElementById('confirm-delete').addEventListener('click', performDelete);
+      render();
+    })();
+  </script>
+</body>
+</html>

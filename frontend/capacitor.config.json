@@ -1,0 +1,6 @@
+{
+  "appId": "com.bibei.app",
+  "appName": "带上",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
