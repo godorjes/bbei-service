@@ -1,8 +1,9 @@
 ﻿const fs = require('fs');
 const path = require('path');
+const { requireIsolatedUiTestBaseUrl } = require('./ui-test-safety.cjs');
+const BASE_URL = requireIsolatedUiTestBaseUrl();
 const { chromium } = require('playwright');
 
-const BASE_URL = 'http://localhost:8080';
 const REPORT_PATH = path.resolve(__dirname, '..', 'ui-test-report-tags-2026-04-08.md');
 
 function nowDate() {
@@ -16,11 +17,11 @@ async function ensureHome(page) {
     const loc = page.locator(selector);
     if (await loc.count()) await loc.first().click();
   };
-  await close('.modal .icon-btn:has-text("✕")');
-  await close('.modal.full .icon-btn:has-text("✕")');
+  await close('.modal .icon-btn[aria-label="关闭"]');
+  await close('.modal.full .icon-btn[aria-label="关闭"]');
   await close('.modal-backdrop');
-  if (await page.locator('.scene-header .icon-btn:has-text("‹")').count()) {
-    await page.click('.scene-header .icon-btn:has-text("‹")');
+  if (await page.locator('.scene-header .icon-btn[aria-label="返回"]').count()) {
+    await page.click('.scene-header .icon-btn[aria-label="返回"]');
   }
   await page.waitForSelector('.bottom-nav');
 }
@@ -28,29 +29,8 @@ async function ensureHome(page) {
 (async () => {
   const results = new Map();
   const setResult = (id, status, note) => results.set(id, { status, note });
-
-  // clean existing tag for deterministic TAG-006
-  try {
-    const res = await fetch(BASE_URL + '/api/tags/list', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}'
-    });
-    const tags = await res.json();
-    const existing = (tags || []).find(t => t.name === '购物清单');
-    if (existing) {
-      const del = await fetch(BASE_URL + '/api/tags/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: existing.id })
-      });
-      if (!del.ok) {
-        console.warn('Failed to delete existing 购物清单 tag:', del.status);
-      }
-    }
-  } catch (e) {
-    console.warn('Pre-clean failed:', e.message);
-  }
+  const tagName = `UI测试-购物清单-${Date.now()}`;
+  let createdTagId = null;
 
   let browser;
   try {
@@ -65,11 +45,13 @@ async function ensureHome(page) {
     await page.waitForSelector('text=场景');
 
     // Open tag manager
-    await page.click('.bottom-nav .nav-btn:has-text("标签")');
-    await page.waitForSelector('.modal.full:has-text("标签管理")');
+    await page.click('.bottom-nav .nav-btn:has-text("管理")');
+    await page.waitForSelector('.modal.full:has-text("管理")');
+    await page.click('.management-tab:has-text("标签")');
+    await page.waitForSelector('.tag-management-panel');
 
     // Open new tag modal
-    await page.click('.modal.full .new-tag-btn');
+    await page.click('.modal.full [aria-label="新建标签"]');
     await page.waitForSelector('.modal:has-text("新建标签")');
 
     // TAG-004: switch color to orange
@@ -85,10 +67,17 @@ async function ensureHome(page) {
 
     // TAG-006: create tag
     try {
-      await page.fill('.modal:has-text("新建标签") input', '购物清单');
+      await page.fill('.modal:has-text("新建标签") input', tagName);
       await page.click('.modal:has-text("新建标签") .primary');
-      await page.waitForSelector('.modal.full .tag-filter');
-      const exists = await page.locator('.filter-chip', { hasText: '购物清单' }).count();
+      await page.waitForSelector('.modal.full .tag-management-panel');
+      const exists = await page.locator('.tag-manage-row', { hasText: tagName }).count();
+      const listRes = await fetch(BASE_URL + '/api/tags/list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      const created = (await listRes.json() || []).find(tag => tag.name === tagName);
+      createdTagId = created ? created.id : null;
       if (exists) setResult('TAG-006', 'PASS', '创建成功');
       else setResult('TAG-006', 'FAIL', '未出现在列表');
     } catch (e) {
@@ -97,16 +86,27 @@ async function ensureHome(page) {
 
     // TAG-007: empty name should disable
     try {
-      await page.click('.modal.full .new-tag-btn');
+      await page.click('.modal.full [aria-label="新建标签"]');
       const disabled = await page.locator('.modal:has-text("新建标签") .primary').isDisabled();
       if (disabled) setResult('TAG-007', 'PASS', '空名称禁用');
       else setResult('TAG-007', 'FAIL', '空名称未禁用');
-      await page.click('.modal:has-text("新建标签") .icon-btn:has-text("✕")');
+      await page.click('.modal:has-text("新建标签") .icon-btn[aria-label="关闭"]');
       await ensureHome(page);
     } catch (e) {
       setResult('TAG-007', 'FAIL', '检测失败');
     }
   } finally {
+    if (createdTagId) {
+      try {
+        await fetch(BASE_URL + '/api/tags/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: createdTagId })
+        });
+      } catch (error) {
+        console.warn('Failed to clean up isolated UI test tag:', error.message);
+      }
+    }
     await browser.close();
   }
 

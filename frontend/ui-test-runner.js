@@ -1,8 +1,9 @@
 ﻿const fs = require('fs');
 const path = require('path');
+const { requireIsolatedUiTestBaseUrl } = require('./ui-test-safety.cjs');
+const BASE_URL = requireIsolatedUiTestBaseUrl();
 const { chromium } = require('playwright');
 
-const BASE_URL = 'http://localhost:8080';
 const REPORT_PATH = path.resolve(__dirname, '..', 'ui-test-report-2026-04-07.md');
 const TESTCASE_CSV = path.resolve(__dirname, '..', 'testcases.csv');
 
@@ -107,11 +108,11 @@ async function clickIfVisible(page, selector) {
 }
 
 async function ensureHome(page) {
-  await clickIfVisible(page, '.modal .icon-btn:has-text("✕")');
-  await clickIfVisible(page, '.modal.full .icon-btn:has-text("✕")');
+  await clickIfVisible(page, '.modal .icon-btn[aria-label="关闭"]');
+  await clickIfVisible(page, '.modal.full .icon-btn[aria-label="关闭"]');
   await clickIfVisible(page, '.modal-backdrop');
-  if (await page.locator('.scene-header .icon-btn:has-text("‹")').count()) {
-    await page.click('.scene-header .icon-btn:has-text("‹")');
+  if (await page.locator('.scene-header .icon-btn[aria-label="返回"]').count()) {
+    await page.click('.scene-header .icon-btn[aria-label="返回"]');
   }
   await page.waitForSelector('.bottom-nav');
 }
@@ -165,10 +166,9 @@ async function ensureHome(page) {
     await page.waitForSelector('text=场景');
 
     try {
-      await page.waitForSelector('text=用标签组合场景');
+      await page.waitForSelector('text=按标签组合场景');
       await page.waitForSelector('text=置顶场景');
       await page.waitForSelector('text=其他场景');
-      await page.waitForSelector('text=最近卡片');
       setResult('HOME-001', 'PASS', '首页结构正常');
     } catch (e) {
       setResult('HOME-001', 'FAIL', '首页结构缺失');
@@ -193,34 +193,35 @@ async function ensureHome(page) {
     }
 
     try {
-      const pills = page.locator('.section:has-text("最近卡片") .pill');
-      const count = await pills.count();
-      if (count > 0) setResult('HOME-004', 'PASS', `最近卡片数量=${count}`);
-      else setResult('HOME-004', 'FAIL', '无最近卡片');
+      const recentSection = page.locator('.recent-section');
+      const count = await recentSection.count();
+      const hidden = count === 1 && !(await recentSection.isVisible());
+      if (hidden) setResult('HOME-004', 'PASS', '最近卡片已按当前产品要求隐藏');
+      else setResult('HOME-004', 'FAIL', '最近卡片模块仍可见或结构异常');
     } catch (e) {
-      setResult('HOME-004', 'FAIL', '检测最近卡片失败');
+      setResult('HOME-004', 'FAIL', '检测最近卡片隐藏状态失败');
     }
 
     try {
       await page.waitForSelector('.bottom-nav');
       await page.waitForSelector('.bottom-nav .nav-btn.active:has-text("场景")');
       await page.waitForSelector('.bottom-nav .fab');
-      await page.waitForSelector('.bottom-nav .nav-btn:has-text("标签")');
+      await page.waitForSelector('.bottom-nav .nav-btn:has-text("管理")');
       setResult('HOME-005', 'PASS', '底部导航正常');
     } catch (e) {
       setResult('HOME-005', 'FAIL', '底部导航异常');
     }
 
     try {
-      await page.click('.bottom-nav .nav-btn:has-text("标签")');
-      await page.waitForSelector('.modal.full:has-text("标签管理")');
-      setResult('HOME-006', 'PASS', '标签管理打开');
-      setResult('HOME-012', 'PASS', '右上角/底部均可进入标签管理');
-      await page.click('.modal.full .icon-btn:has-text("✕")');
+      await page.click('.bottom-nav .nav-btn:has-text("管理")');
+      await page.waitForSelector('.modal.full:has-text("管理")');
+      setResult('HOME-006', 'PASS', '管理页打开');
+      setResult('HOME-012', 'PASS', '右上角/底部均可进入管理页');
+      await page.click('.modal.full .icon-btn[aria-label="关闭"]');
       await ensureHome(page);
     } catch (e) {
-      setResult('HOME-006', 'FAIL', '标签管理未打开');
-      setResult('HOME-012', 'FAIL', '标签管理未打开');
+      setResult('HOME-006', 'FAIL', '管理页未打开');
+      setResult('HOME-012', 'FAIL', '管理页未打开');
     }
 
     try {
@@ -229,7 +230,7 @@ async function ensureHome(page) {
       await page.waitForSelector('.scene-info h2');
       await page.waitForSelector('text=已确认');
       setResult('HOME-007', 'PASS', '进入场景详情');
-      await page.click('.scene-header .icon-btn:has-text("‹")');
+      await page.click('.scene-header .icon-btn[aria-label="返回"]');
       await ensureHome(page);
     } catch (e) {
       setResult('HOME-007', 'FAIL', '无法进入场景详情');
@@ -240,7 +241,7 @@ async function ensureHome(page) {
       await item.click();
       await page.waitForSelector('.scene-info h2');
       setResult('HOME-008', 'PASS', '进入其他场景详情');
-      await page.click('.scene-header .icon-btn:has-text("‹")');
+      await page.click('.scene-header .icon-btn[aria-label="返回"]');
       await ensureHome(page);
     } catch (e) {
       setResult('HOME-008', 'FAIL', '无法进入其他场景');
@@ -265,19 +266,19 @@ async function ensureHome(page) {
       await page.click('.modal .modal-list button:has-text("新建场景")');
       await page.waitForSelector('.modal:has-text("新建场景")');
       setResult('NEW-003', 'PASS', '新建场景弹窗打开');
-      await page.click('.modal .icon-btn:has-text("✕")');
+      await page.click('.modal .icon-btn[aria-label="关闭"]');
       await ensureHome(page);
       await page.click('.bottom-nav .fab');
       await page.click('.modal .modal-list button:has-text("新建卡片")');
       await page.waitForSelector('.modal:has-text("新建卡片")');
       setResult('NEW-004', 'PASS', '新建卡片弹窗打开');
-      await page.click('.modal .icon-btn:has-text("✕")');
+      await page.click('.modal .icon-btn[aria-label="关闭"]');
       await ensureHome(page);
       await page.click('.bottom-nav .fab');
       await page.click('.modal .modal-list button:has-text("新建标签")');
       await page.waitForSelector('.modal:has-text("新建标签")');
       setResult('NEW-005', 'PASS', '新建标签弹窗打开');
-      await page.click('.modal .icon-btn:has-text("✕")');
+      await page.click('.modal .icon-btn[aria-label="关闭"]');
       await ensureHome(page);
     } catch (e) {
       if (!results.has('NEW-003')) setResult('NEW-003', 'FAIL', '未打开新建场景');
@@ -287,7 +288,7 @@ async function ensureHome(page) {
 
     try {
       await page.click('.bottom-nav .fab');
-      await page.click('.modal .icon-btn:has-text("✕")');
+      await page.click('.modal .icon-btn[aria-label="关闭"]');
       setResult('NEW-006', 'PASS', '点击×关闭');
       await ensureHome(page);
       await page.click('.bottom-nav .fab');
@@ -301,13 +302,13 @@ async function ensureHome(page) {
 
     setResult('NEW-008', 'SKIP', '下滑手势自动化跳过');
 
-    await page.click('.bottom-nav .nav-btn:has-text("标签")');
-    await page.waitForSelector('.modal.full:has-text("标签管理")');
+    await page.click('.bottom-nav .nav-btn:has-text("管理")');
+    await page.waitForSelector('.modal.full:has-text("管理")');
 
     try {
-      await page.waitForSelector('.modal.full .new-tag-btn');
-      setResult('TMGT-001', 'PASS', '标签管理正常展示');
-    } catch { setResult('TMGT-001','FAIL','标签管理异常'); }
+      await page.waitForSelector('.management-tabs');
+      setResult('TMGT-001', 'PASS', '卡片与标签管理正常展示');
+    } catch { setResult('TMGT-001','FAIL','管理页异常'); }
 
     try {
       const chips = page.locator('.tag-filter .filter-chip');
@@ -330,7 +331,9 @@ async function ensureHome(page) {
     } catch { setResult('TMGT-005','FAIL','检查失败'); }
 
     try {
-      await page.click('.modal.full .new-tag-btn');
+      await page.click('.management-tab:has-text("标签")');
+      await page.waitForSelector('.tag-management-panel');
+      await page.click('.modal.full [aria-label="新建标签"]');
       await page.waitForSelector('.modal:has-text("新建标签")');
       setResult('TMGT-006','PASS','新建标签弹窗打开');
     } catch { setResult('TMGT-006','FAIL','未打开新建标签'); }
@@ -370,18 +373,18 @@ async function ensureHome(page) {
 
     try {
       await page.click('.modal:has-text("新建标签") .primary');
-      await page.waitForSelector('.modal.full .tag-filter');
-      const exists = await page.locator('.filter-chip', { hasText: '购物清单' }).count();
+      await page.waitForSelector('.modal.full .tag-management-panel');
+      const exists = await page.locator('.tag-manage-row', { hasText: '购物清单' }).count();
       if (exists) setResult('TAG-006','PASS','创建成功');
       else setResult('TAG-006','FAIL','未出现在列表');
     } catch { setResult('TAG-006','FAIL','创建失败'); }
 
     try {
-      await page.click('.modal.full .new-tag-btn');
+      await page.click('.modal.full [aria-label="新建标签"]');
       const disabled = await page.locator('.modal:has-text("新建标签") .primary').isDisabled();
       if (disabled) setResult('TAG-007','PASS','空名称禁用');
       else setResult('TAG-007','FAIL','空名称未禁用');
-      await page.click('.modal:has-text("新建标签") .icon-btn:has-text("✕")');
+      await page.click('.modal:has-text("新建标签") .icon-btn[aria-label="关闭"]');
     } catch { setResult('TAG-007','FAIL','检测失败'); }
 
     setResult('TAG-008','SKIP','需要错误提示/校验，当前UI未支持');
@@ -392,7 +395,7 @@ async function ensureHome(page) {
     setResult('TAG-013','PASS','关闭弹窗可用');
     setResult('TAG-014','SKIP','emoji创建未验证');
 
-    await page.click('.modal.full .icon-btn:has-text("✕")');
+    await page.click('.modal.full .icon-btn[aria-label="关闭"]');
     await ensureHome(page);
 
     await page.click('.bottom-nav .fab');
@@ -407,8 +410,8 @@ async function ensureHome(page) {
     } catch { setResult('SCE-002','FAIL','图标区域异常'); }
 
     try {
-      await page.click('.emoji-list .emoji-btn:has-text("✈️")');
-      const active = await page.locator('.emoji-list .emoji-btn:has-text("✈️")').evaluate(el => el.classList.contains('active'));
+      await page.click('.emoji-list .emoji-btn[aria-label="选择图标 ✈️"]');
+      const active = await page.locator('.emoji-list .emoji-btn[aria-label="选择图标 ✈️"]').evaluate(el => el.classList.contains('active'));
       if (active) setResult('SCE-003','PASS','图标选中');
       else setResult('SCE-003','FAIL','图标未选中');
     } catch { setResult('SCE-003','FAIL','图标选择失败'); }
@@ -546,7 +549,7 @@ async function ensureHome(page) {
       await firstCard.click();
       setResult('DET-003','PASS','取消成功');
       setResult('DET-004','SKIP','全部确认动画跳过');
-      await page.click('.scene-header .icon-btn:has-text("‹")');
+      await page.click('.scene-header .icon-btn[aria-label="返回"]');
       await ensureHome(page);
     } catch {
       setResult('DET-001','FAIL','场景详情异常');

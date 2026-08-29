@@ -4,26 +4,29 @@
       <div class="status-bar">
         <span>{{ currentTime }}</span>
         <div class="status-icons">
+          <span class="status-signal"><i></i><i></i><i></i><i></i></span>
+          <span class="status-wifi">⌁</span>
           <div class="battery"><div class="battery-fill" :style="{ width: batteryLevel + '%' }"></div></div>
         </div>
       </div>
 
       <div class="content">
-        <div v-if="currentView === 'home'" class="view">
+        <transition name="view" mode="out-in">
+          <div v-if="currentView === 'home'" key="home" class="view">
           <header class="header">
             <div>
               <h1>场景</h1>
-              <p>用标签组合场景，告别层级结构</p>
+              <p>按标签组合场景，告别层级结构</p>
             </div>
-            <button class="icon-btn" @click="openTagView">
-              <span class="icon">🏷️</span>
+            <button class="icon-btn header-tag-btn" aria-label="打开卡片与标签管理" @click="openTagView">
+              <span class="line-icon" v-html="uiIconSvg('tag')"></span>
             </button>
           </header>
 
           <div class="search-wrap">
-            <span class="search-icon">🔍</span>
-            <input v-model="sceneSearch" class="search-input" placeholder="搜索场景..." />
-            <button v-if="sceneSearch" class="search-clear" @click="sceneSearch = ''">✕</button>
+            <span class="search-icon line-icon" v-html="uiIconSvg('search')"></span>
+            <input v-model="sceneSearch" class="search-input" placeholder="搜索场景" />
+            <button v-if="sceneSearch" class="search-clear" aria-label="清除搜索" @click="sceneSearch = ''" v-html="uiIconSvg('close')"></button>
           </div>
 
           <template v-if="searchResults !== null">
@@ -48,52 +51,69 @@
 
           <template v-else>
             <section v-if="scenePinned.length" class="section">
-              <div class="section-title">
-                <span class="dot yellow"></span>
+              <div class="section-title pinned-section-title">
                 <span>置顶场景</span>
+                <small class="swipe-hint">左滑管理 · 长按更多</small>
                 <button class="section-collapse-btn" @click="pinnedCollapsed = !pinnedCollapsed">
                   {{ pinnedCollapsed ? '展开' : '收起' }}
-                  <span class="expand-arrow">{{ pinnedCollapsed ? '↓' : '↑' }}</span>
                 </button>
               </div>
               <div v-if="!pinnedCollapsed" class="grid">
-                <button v-for="scene in scenePinned" :key="scene.id" class="card" @click="openScene(scene)"
-                  @touchstart.passive="startLongPress(scene, 'scene')"
-                  @touchend="cancelLongPress"
+                <div v-for="(scene, idx) in scenePinned" :key="scene.id" class="swipe-row pinned-scene-row card-stagger" :style="{ animationDelay: (idx * 0.04) + 's' }"
+                  @touchstart.passive="gestureStart($event, scene, 'scene')"
+                  @touchend="gestureEnd($event, scene.id)"
                   @touchmove.passive="cancelLongPress"
                   @touchcancel="cancelLongPress">
-                  <div class="progress" :style="{ width: percent(scene) + '%' }"></div>
-                  <div class="emoji">{{ scene.icon }}</div>
-                  <div class="title">{{ scene.name }}</div>
-                  <div class="sub">{{ scene.checkedCount }}/{{ scene.totalCount }} 已确认</div>
-                  <button class="pin pin-btn" @click.stop="togglePin(scene)">📌</button>
-                </button>
+                  <div class="swipe-content" :class="{ 'swipe-open': swipedItemId === scene.id }">
+                    <div class="card pinned-scene-card">
+                      <button class="pinned-scene-main" @click="handlePinnedSceneClick(scene)">
+                        <div class="progress" :style="{ width: percent(scene) + '%' }"></div>
+                        <div class="scene-icon-tile">
+                          <span class="line-icon" v-html="sceneIconSvg(scene.icon)"></span>
+                        </div>
+                        <div class="title">{{ scene.name }}</div>
+                        <div class="sub">{{ scene.checkedCount }}/{{ scene.totalCount }} 已确认</div>
+                      </button>
+                      <button class="pin pin-btn" aria-label="取消置顶" @click.stop="togglePin(scene)" v-html="uiIconSvg('pin')"></button>
+                    </div>
+                    <div class="swipe-btns">
+                      <button class="swipe-btn-edit" @click.stop="openEditScene(scene)">编辑</button>
+                      <button class="swipe-btn-delete" @click.stop="requestDelete('scene', scene)">删除</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
 
             <section v-if="sceneOthers.records.length || sceneOthers.total > 0" class="section">
               <div class="section-title">
-                <span class="dot gray"></span>
                 <span>其他场景</span>
+                <small class="swipe-hint">左滑管理 · 长按更多</small>
               </div>
-              <div class="list">
+              <div class="list section-surface">
                 <div v-for="scene in sceneOthers.records" :key="scene.id" class="swipe-row"
-                  @touchstart.passive="swipeStart"
-                  @touchend="swipeEnd($event, scene.id)">
+                  @touchstart.passive="gestureStart($event, scene, 'scene')"
+                  @touchend="gestureEnd($event, scene.id)"
+                  @touchmove.passive="cancelLongPress"
+                  @touchcancel="cancelLongPress">
                   <div class="swipe-content" :class="{ 'swipe-open': swipedItemId === scene.id }">
-                    <button class="list-item" @click="handleOtherSceneClick(scene)">
-                      <div class="emoji small">{{ scene.icon }}</div>
-                      <div class="list-main">
-                        <div class="title">{{ scene.name }}</div>
-                        <div class="sub">{{ tagNames(scene.tags) }}</div>
-                      </div>
-                      <div class="count">{{ scene.checkedCount }}/{{ scene.totalCount }}</div>
-                      <span class="chevron">›</span>
-                      <button class="pin-btn pin-inline" @click.stop="togglePin(scene)">📌</button>
-                    </button>
+                    <div class="list-item">
+                      <button class="list-item-main" @click="handleOtherSceneClick(scene)">
+                        <div class="scene-list-icon">
+                          <span class="line-icon" v-html="sceneIconSvg(scene.icon)"></span>
+                        </div>
+                        <div class="list-main">
+                          <div class="title">{{ scene.name }}</div>
+                          <div class="sub">{{ tagNames(scene.tags) }}</div>
+                        </div>
+                        <div class="count">{{ scene.checkedCount }}/{{ scene.totalCount }}</div>
+                        <span class="chevron line-icon" v-html="uiIconSvg('chevron')"></span>
+                      </button>
+                      <button class="pin-btn pin-inline" aria-label="置顶场景" @click.stop="togglePin(scene)" v-html="uiIconSvg('pin')"></button>
+                    </div>
                     <div class="swipe-btns">
                       <button class="swipe-btn-edit" @click.stop="openEditScene(scene)">编辑</button>
-                      <button class="swipe-btn-delete" @click.stop="deleteSceneItem(scene)">删除</button>
+                      <button class="swipe-btn-delete" @click.stop="requestDelete('scene', scene)">删除</button>
                     </div>
                   </div>
                 </div>
@@ -109,7 +129,7 @@
             </section>
           </template>
 
-          <section v-if="searchResults === null" class="section">
+          <section v-show="false" v-if="searchResults === null" class="section recent-section">
             <div class="section-title">
               <span class="dot gray"></span>
               <span>最近卡片</span>
@@ -131,10 +151,12 @@
           </section>
         </div>
 
-        <div v-if="currentView === 'scene'" class="view">
+        <div v-else key="scene" class="view">
           <header class="header scene-header">
-            <button class="icon-btn" @click="backHome">‹</button>
-            <button class="icon-btn" @click="resetChecks">⟲</button>
+            <button class="icon-btn" aria-label="返回" @click="backHome" title="返回" v-html="uiIconSvg('back')"></button>
+            <div style="display:flex;gap:8px">
+              <button class="icon-btn" aria-label="重置" @click="resetChecks" title="重置" v-html="uiIconSvg('reset')"></button>
+            </div>
           </header>
           <div v-if="showResumePrompt" class="resume-prompt">
             <span class="resume-text">
@@ -147,7 +169,7 @@
           </div>
 
           <div class="scene-info">
-            <div class="emoji big">{{ selectedScene.icon }}</div>
+            <div class="emoji big line-icon" v-html="sceneIconSvg(selectedScene.icon)"></div>
             <div>
               <h2>{{ selectedScene.name }}</h2>
               <div class="tag-row">
@@ -157,7 +179,9 @@
           </div>
           <div class="progress-row">
             <span>{{ checkedCount }}/{{ sceneCards.length }} 已确认</span>
-            <span v-if="checkedCount === sceneCards.length && sceneCards.length">全部完成</span>
+            <span v-if="checkedCount === sceneCards.length && sceneCards.length" class="highlight">
+              全部完成 <i class="completion-icon line-icon" v-html="uiIconSvg('celebrate')"></i>
+            </span>
           </div>
           <div class="progress-bar">
             <div class="progress-inner" :style="{ width: sceneCards.length ? (checkedCount/sceneCards.length*100) + '%' : '0%' }"></div>
@@ -173,33 +197,57 @@
             </button>
           </div>
         </div>
+        </transition>
       </div>
 
-      <div v-if="currentView === 'home' && !anyModal" class="bottom-nav">
-        <button class="nav-btn active">🏠<span>场景</span></button>
-        <button class="fab" @click="openCreateMenu">＋</button>
-        <button class="nav-btn" @click="openTagView">🏷️<span>标签</span></button>
+      <div v-if="currentView === 'home'" class="bottom-nav" role="navigation" aria-label="主要导航">
+        <button :class="['nav-btn', { active: !showTagView }]" @click="closeTagView">
+          <span class="nav-icon line-icon" v-html="uiIconSvg('grid')"></span>
+          <span>场景</span>
+        </button>
+        <button class="nav-btn create-nav" @click="openCreateMenu">
+          <span class="fab line-icon" v-html="uiIconSvg('plus')"></span>
+          <span>新建</span>
+        </button>
+        <button :class="['nav-btn', { active: showTagView }]" aria-label="打开管理" @click="openTagView">
+          <span class="nav-icon line-icon" v-html="uiIconSvg('tag')"></span>
+          <span>管理</span>
+        </button>
       </div>
 
-      <div v-if="showCreateMenu" class="modal-backdrop" @click.self="closeCreateMenu">
-        <div class="modal">
+      <div v-if="showCreateMenu" class="modal-backdrop create-menu-backdrop" @click.self="closeCreateMenu">
+        <div class="modal create-sheet">
+          <div class="sheet-handle"></div>
           <div class="modal-header">
             <h3>新建</h3>
-            <button class="icon-btn" @click="closeCreateMenu">✕</button>
+            <button class="icon-btn" aria-label="关闭" @click="closeCreateMenu" v-html="uiIconSvg('close')"></button>
           </div>
           <div class="modal-list">
-            <button @click="openNewScene">新建场景<span>组合标签创建使用场景</span></button>
-            <button @click="openNewCard">新建卡片<span>添加物品并打上标签</span></button>
-            <button @click="openNewTag">新建标签<span>创建分类标签</span></button>
+            <button @click="openNewScene">
+              <span class="menu-icon scene-menu-icon line-icon" v-html="uiIconSvg('layers')"></span>
+              <span class="menu-copy"><strong>新建场景</strong><small>组合标签创建使用场景</small></span>
+              <span class="menu-chevron line-icon" v-html="uiIconSvg('chevron')"></span>
+            </button>
+            <button @click="openNewCard">
+              <span class="menu-icon card-menu-icon line-icon" v-html="uiIconSvg('card')"></span>
+              <span class="menu-copy"><strong>新建卡片</strong><small>添加物品并打上标签</small></span>
+              <span class="menu-chevron line-icon" v-html="uiIconSvg('chevron')"></span>
+            </button>
+            <button @click="openNewTag">
+              <span class="menu-icon tag-menu-icon line-icon" v-html="uiIconSvg('tag')"></span>
+              <span class="menu-copy"><strong>新建标签</strong><small>创建分类标签</small></span>
+              <span class="menu-chevron line-icon" v-html="uiIconSvg('chevron')"></span>
+            </button>
           </div>
         </div>
       </div>
 
       <div v-if="showNewCard" class="modal-backdrop top" @click.self="closeNewCard">
-        <div class="modal">
+        <div class="modal form-sheet">
+          <div class="sheet-handle"></div>
           <div class="modal-header">
             <h3>{{ editingCard ? '编辑卡片' : '新建卡片' }}</h3>
-            <button class="icon-btn" @click="closeNewCard">✕</button>
+            <button class="icon-btn" aria-label="关闭" @click="closeNewCard" v-html="uiIconSvg('close')"></button>
           </div>
           <div class="form">
             <label>卡片名称</label>
@@ -223,10 +271,11 @@
       </div>
 
       <div v-if="showNewScene" class="modal-backdrop top" @click.self="closeNewScene">
-        <div class="modal">
+        <div class="modal form-sheet scene-form-sheet">
+          <div class="sheet-handle"></div>
           <div class="modal-header">
             <h3>{{ editingScene ? '编辑场景' : '新建场景' }}</h3>
-            <button class="icon-btn" @click="closeNewScene">✕</button>
+            <button class="icon-btn" aria-label="关闭" @click="closeNewScene" v-html="uiIconSvg('close')"></button>
           </div>
           <div class="form">
             <label>选择图标</label>
@@ -236,8 +285,9 @@
                 :key="emoji"
                 :class="['emoji-btn', newSceneIcon === emoji ? 'active' : '']"
                 @click="newSceneIcon = emoji"
+                :aria-label="`选择图标 ${emoji}`"
               >
-                {{ emoji }}
+                <span class="line-icon" v-html="sceneIconSvg(emoji)"></span>
               </button>
             </div>
             <label>场景名称</label>
@@ -264,10 +314,11 @@
       </div>
 
       <div v-if="showNewTag" class="modal-backdrop top" @click.self="closeNewTag">
-        <div class="modal">
+        <div class="modal form-sheet tag-form-sheet">
+          <div class="sheet-handle"></div>
           <div class="modal-header">
             <h3>{{ editingTag ? '编辑标签' : '新建标签' }}</h3>
-            <button class="icon-btn" @click="closeNewTag">✕</button>
+            <button class="icon-btn" aria-label="关闭" @click="closeNewTag" v-html="uiIconSvg('close')"></button>
           </div>
           <div class="form">
             <label>标签名称</label>
@@ -280,7 +331,8 @@
                 :class="['color-btn', opt.value, newTagColor === opt.value ? 'active' : '']"
                 @click="newTagColor = opt.value"
               >
-                {{ opt.name }}
+                <span class="color-swatch"></span>
+                <span class="color-name">{{ opt.name }}</span>
               </button>
             </div>
             <button class="primary" :disabled="!isNewTagValid" @click="createTag">{{ editingTag ? '保存' : '创建标签' }}</button>
@@ -289,61 +341,111 @@
         </div>
       </div>
 
-      <div v-if="showTagView" class="modal-backdrop" @click.self="closeTagView">
-        <div class="modal full">
-          <div class="modal-header">
-            <h3>标签管理</h3>
+      <div v-if="showTagView" class="modal-backdrop tag-view-backdrop" @click.self="closeTagView">
+        <div class="modal full tag-manager">
+          <div class="modal-header tag-manager-header">
+            <h3>管理</h3>
             <div class="right-actions">
-              <button class="new-tag-btn" @click="openNewTag">＋ 新标签</button>
-              <button class="icon-btn" @click="closeTagView">✕</button>
+              <button v-if="managementTab === 'cards'" class="management-add-btn line-icon" aria-label="新建卡片" @click="openNewCard" v-html="uiIconSvg('plus')"></button>
+              <button v-else class="management-add-btn line-icon" aria-label="新建标签" @click="openNewTag" v-html="uiIconSvg('plus')"></button>
+              <button class="icon-btn" aria-label="关闭" @click="closeTagView" v-html="uiIconSvg('close')"></button>
             </div>
           </div>
-          <div class="tag-filter">
+
+          <div class="management-tabs" role="tablist" aria-label="管理分类">
             <button
-              v-for="tag in visibleFilterTags"
-              :key="tag.id"
-              :class="['filter-chip', selectedTagFilter === tag.id ? tag.color : '']"
-              @click="toggleTagFilter(tag.id)"
-              @touchstart.passive="startLongPress(tag, 'tag')"
-              @touchend="cancelLongPress"
-              @touchmove.passive="cancelLongPress"
-              @touchcancel="cancelLongPress"
-            >
-              {{ tag.name }} <span>{{ tag.cardCount }}</span>
-            </button>
-            <button v-if="tags.length > 6 && !tagFilterExpanded" class="filter-chip filter-more" @click="tagFilterExpanded = true">
-              +{{ tags.length - 6 }} 个标签
-            </button>
-            <button v-if="tagFilterExpanded && tags.length > 6" class="filter-chip filter-more" @click="tagFilterExpanded = false">
-              收起
-            </button>
+              role="tab"
+              :class="['management-tab', { active: managementTab === 'cards' }]"
+              :aria-selected="managementTab === 'cards'"
+              @click="managementTab = 'cards'"
+            >卡片</button>
+            <button
+              role="tab"
+              :class="['management-tab', { active: managementTab === 'tags' }]"
+              :aria-selected="managementTab === 'tags'"
+              @click="managementTab = 'tags'"
+            >标签</button>
           </div>
-          <div class="list">
-            <div class="list-title">{{ selectedTagFilter ? '标签下卡片' : '全部卡片' }} · {{ tagViewCards.length }} 个</div>
-            <div v-for="card in visibleTagViewCards" :key="card.id" class="swipe-row"
-              @touchstart.passive="swipeStart"
-              @touchend="swipeEnd($event, card.id)">
-              <div class="swipe-content" :class="{ 'swipe-open': swipedItemId === card.id }">
-                <div class="list-item" @click="handleCardClick(card)">
-                  <span class="card-text-truncate">{{ card.title }}</span>
-                  <div class="tag-row">
-                    <span v-for="tag in card.tags" :key="tag.id" class="tag" :class="tag.color">{{ tag.name }}</span>
+
+          <div v-if="managementTab === 'cards'" class="management-panel">
+            <div class="tag-filter">
+              <button
+                v-for="tag in visibleFilterTags"
+                :key="tag.id"
+                :class="['filter-chip', tag.color, { selected: selectedTagFilter === tag.id }]"
+                @click="toggleTagFilter(tag.id)"
+              >
+                <b v-if="selectedTagFilter === tag.id">✓</b>{{ tag.name }} <span>{{ tag.cardCount }}</span>
+              </button>
+              <button v-if="tags.length > 6 && !tagFilterExpanded" class="filter-chip filter-more" @click="tagFilterExpanded = true">
+                +{{ tags.length - 6 }} 个标签
+              </button>
+              <button v-if="tagFilterExpanded && tags.length > 6" class="filter-chip filter-more" @click="tagFilterExpanded = false">
+                收起
+              </button>
+            </div>
+            <div class="list tag-card-list">
+              <div class="list-title list-title-with-hint">
+                <span>{{ selectedTagFilter ? '标签下卡片' : '全部卡片' }} · {{ tagViewCards.length }} 个</span>
+                <small class="swipe-hint">左滑管理 · 长按更多</small>
+              </div>
+              <div class="tag-card-surface">
+                <div v-for="card in visibleTagViewCards" :key="card.id" class="swipe-row"
+                  @touchstart.passive="gestureStart($event, card, 'card')"
+                  @touchend="gestureEnd($event, card.id)"
+                  @touchmove.passive="cancelLongPress"
+                  @touchcancel="cancelLongPress">
+                  <div class="swipe-content" :class="{ 'swipe-open': swipedItemId === card.id }">
+                    <button class="list-item" @click="handleCardClick(card)">
+                      <span class="card-type-icon line-icon" v-html="cardIconSvg(card.title)"></span>
+                      <span class="card-text-truncate">{{ card.title }}</span>
+                      <div class="tag-row">
+                        <span v-for="tag in card.tags" :key="tag.id" class="tag" :class="tag.color">{{ tag.name }}</span>
+                      </div>
+                    </button>
+                    <div class="swipe-btns">
+                      <button class="swipe-btn-edit" @click.stop="openEditCard(card)">编辑</button>
+                      <button class="swipe-btn-delete" @click.stop="requestDelete('card', card)">删除</button>
+                    </div>
                   </div>
                 </div>
-                <div class="swipe-btns">
-                  <button class="swipe-btn-edit" @click.stop="openEditCard(card)">编辑</button>
-                  <button class="swipe-btn-delete" @click.stop="deleteCardItem(card)">删除</button>
+              </div>
+              <button v-if="tagViewCards.length > 6 && !tagViewExpanded" class="expand-btn" @click="tagViewExpanded = true">
+                展开全部 {{ tagViewCards.length }} 条
+                <span class="expand-arrow">↓</span>
+              </button>
+              <button v-if="tagViewExpanded && tagViewCards.length > 6" class="expand-btn" @click="tagViewExpanded = false">
+                收起
+                <span class="expand-arrow">↑</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="management-panel tag-management-panel">
+            <div class="list-title list-title-with-hint">
+              <span>全部标签 · {{ tags.length }} 个</span>
+              <small class="swipe-hint">左滑管理 · 长按更多</small>
+            </div>
+            <div class="tag-card-surface tag-manage-surface">
+              <div v-for="tag in tags" :key="tag.id" class="swipe-row"
+                @touchstart.passive="gestureStart($event, tag, 'tag')"
+                @touchend="gestureEnd($event, tag.id)"
+                @touchmove.passive="cancelLongPress"
+                @touchcancel="cancelLongPress">
+                <div class="swipe-content" :class="{ 'swipe-open': swipedItemId === tag.id }">
+                  <button class="list-item tag-manage-row" @click="handleTagClick(tag)">
+                    <span class="tag-color-dot" :class="tag.color"></span>
+                    <span class="tag-manage-name">{{ tag.name }}</span>
+                    <span class="tag-manage-count">{{ tag.cardCount }} 张卡片</span>
+                    <span class="chevron line-icon" v-html="uiIconSvg('chevron')"></span>
+                  </button>
+                  <div class="swipe-btns">
+                    <button class="swipe-btn-edit" @click.stop="openEditTag(tag)">编辑</button>
+                    <button class="swipe-btn-delete" @click.stop="requestDelete('tag', tag)">删除</button>
+                  </div>
                 </div>
               </div>
             </div>
-            <button v-if="tagViewCards.length > 6 && !tagViewExpanded" class="expand-btn" @click="tagViewExpanded = true">
-              展开全部 {{ tagViewCards.length }} 条
-              <span class="expand-arrow">↓</span>
-            </button>
-            <button v-if="tagViewExpanded && tagViewCards.length > 6" class="expand-btn" @click="tagViewExpanded = false">
-              收起
-              <span class="expand-arrow">↑</span>
-            </button>
           </div>
         </div>
       </div>
@@ -357,12 +459,27 @@
         </div>
       </div>
 
+      <div v-if="showDeleteConfirm" class="modal-backdrop delete-confirm-backdrop" @click.self="cancelDelete">
+        <div class="delete-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+          <div class="delete-confirm-icon line-icon" v-html="uiIconSvg('trash')"></div>
+          <h3 id="delete-confirm-title">删除{{ deleteTypeLabel }}？</h3>
+          <p>“{{ deleteTargetName }}”删除后无法恢复。</p>
+          <div class="delete-confirm-actions">
+            <button class="delete-cancel-btn" :disabled="deleteSubmitting" @click="cancelDelete">取消</button>
+            <button class="delete-confirm-btn" :disabled="deleteSubmitting" @click="confirmDelete">
+              {{ deleteSubmitting ? '删除中...' : '确认删除' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script>
 import { api } from './api';
+const { sceneIconSvg, uiIconSvg, cardIconSvg } = require('./ui-icons.cjs');
 
 export default {
   name: 'App',
@@ -386,6 +503,7 @@ export default {
       showNewScene: false,
       showNewTag: false,
       showTagView: false,
+      managementTab: 'cards',
       newCardTitle: '',
       selectedNewCardTags: [],
       newSceneName: '',
@@ -421,6 +539,10 @@ export default {
       showActionSheet: false,
       actionSheetItem: null,
       actionSheetType: null,
+      showDeleteConfirm: false,
+      deleteTarget: null,
+      deleteSubmitting: false,
+      gestureHandled: false,
       editingScene: null,
       editingTag: null,
       editingCard: null
@@ -442,7 +564,7 @@ export default {
       return this.tagViewExpanded ? this.tagViewCards : this.tagViewCards.slice(0, 6);
     },
     anyModal() {
-      return this.showCreateMenu || this.showNewCard || this.showNewScene || this.showNewTag || this.showTagView || this.showActionSheet;
+      return this.showCreateMenu || this.showNewCard || this.showNewScene || this.showNewTag || this.showTagView || this.showActionSheet || this.showDeleteConfirm;
     },
     recentCards() {
       return this.cardsPage.records.slice(0, 8);
@@ -455,6 +577,13 @@ export default {
     },
     isNewTagValid() {
       return this.newTagName.trim().length > 0;
+    },
+    deleteTypeLabel() {
+      return { scene: '场景', card: '卡片', tag: '标签' }[this.deleteTarget?.type] || '内容';
+    },
+    deleteTargetName() {
+      const item = this.deleteTarget?.item;
+      return item ? (item.name || item.title || '') : '';
     }
   },
   watch: {
@@ -477,6 +606,9 @@ export default {
     clearInterval(this._timeTimer);
   },
   methods: {
+    sceneIconSvg,
+    uiIconSvg,
+    cardIconSvg,
     updateTime() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
@@ -620,10 +752,13 @@ export default {
     },
     openTagView() {
       this.showTagView = true;
+      this.managementTab = 'cards';
       this.selectedTagFilter = null;
+      this.swipedItemId = null;
     },
     closeTagView() {
       this.showTagView = false;
+      this.swipedItemId = null;
     },
     toggleNewCardTag(id) {
       const idx = this.selectedNewCardTags.indexOf(id);
@@ -715,16 +850,29 @@ export default {
       if (Math.abs(dx) > Math.abs(dy)) {
         if (dx < -50) {
           this.swipedItemId = id;
+          return true;
         } else if (dx > 20) {
           this.swipedItemId = null;
+          return true;
         }
       }
+      return false;
+    },
+    gestureStart(e, item, type) {
+      this.gestureHandled = false;
+      this.swipeStart(e);
+      this.startLongPress(item, type);
+    },
+    gestureEnd(e, id) {
+      this.cancelLongPress();
+      if (this.swipeEnd(e, id)) this.gestureHandled = true;
     },
     startLongPress(item, type) {
       this.longPressTimer = setTimeout(() => {
         this.actionSheetItem = item;
         this.actionSheetType = type;
         this.showActionSheet = true;
+        this.gestureHandled = true;
       }, 500);
     },
     cancelLongPress() {
@@ -739,11 +887,35 @@ export default {
       else if (this.actionSheetType === 'tag') this.openEditTag(this.actionSheetItem);
       else if (this.actionSheetType === 'card') this.openEditCard(this.actionSheetItem);
     },
-    async handleActionDelete() {
+    handleActionDelete() {
+      this.requestDelete(this.actionSheetType, this.actionSheetItem);
+    },
+    requestDelete(type, item) {
+      if (!item || !['scene', 'card', 'tag'].includes(type)) return;
+      this.cancelLongPress();
+      this.swipedItemId = null;
       this.showActionSheet = false;
-      if (this.actionSheetType === 'scene') await this.deleteSceneItem(this.actionSheetItem);
-      else if (this.actionSheetType === 'tag') await this.deleteTagItem(this.actionSheetItem);
-      else if (this.actionSheetType === 'card') await this.deleteCardItem(this.actionSheetItem);
+      this.deleteTarget = { type, item };
+      this.showDeleteConfirm = true;
+    },
+    cancelDelete() {
+      if (this.deleteSubmitting) return;
+      this.showDeleteConfirm = false;
+      this.deleteTarget = null;
+    },
+    async confirmDelete() {
+      if (!this.deleteTarget || this.deleteSubmitting) return;
+      const { type, item } = this.deleteTarget;
+      this.deleteSubmitting = true;
+      try {
+        if (type === 'scene') await this.deleteSceneItem(item);
+        else if (type === 'tag') await this.deleteTagItem(item);
+        else if (type === 'card') await this.deleteCardItem(item);
+        this.showDeleteConfirm = false;
+        this.deleteTarget = null;
+      } finally {
+        this.deleteSubmitting = false;
+      }
     },
     openEditScene(scene) {
       this.swipedItemId = null;
@@ -755,6 +927,7 @@ export default {
       this.showNewScene = true;
     },
     openEditTag(tag) {
+      this.swipedItemId = null;
       this.editingTag = tag;
       this.newTagName = tag.name;
       this.newTagColor = tag.color;
@@ -780,19 +953,45 @@ export default {
     async deleteCardItem(card) {
       this.swipedItemId = null;
       await api.deleteCard(card.id);
-      await this.fetchCards();
+      await this.refreshAll();
     },
     handleOtherSceneClick(scene) {
+      if (this.gestureHandled) {
+        this.gestureHandled = false;
+        return;
+      }
       if (this.swipedItemId === scene.id) {
         this.swipedItemId = null;
         return;
       }
       this.openScene(scene);
     },
+    handlePinnedSceneClick(scene) {
+      if (this.gestureHandled) {
+        this.gestureHandled = false;
+        return;
+      }
+      this.openScene(scene);
+    },
     handleCardClick(card) {
+      if (this.gestureHandled) {
+        this.gestureHandled = false;
+        return;
+      }
       if (this.swipedItemId === card.id) {
         this.swipedItemId = null;
       }
+    },
+    handleTagClick(tag) {
+      if (this.gestureHandled) {
+        this.gestureHandled = false;
+        return;
+      }
+      if (this.swipedItemId === tag.id) {
+        this.swipedItemId = null;
+        return;
+      }
+      this.openEditTag(tag);
     }
   }
 };
