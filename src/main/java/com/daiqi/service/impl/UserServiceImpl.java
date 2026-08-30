@@ -35,6 +35,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse register(RegisterRequest request) {
+        String phone = normalizeOptionalPhone(request.getPhone());
+
         // 检查用户名是否已存在
         User existing = userMapper.selectByUsername(request.getUsername());
         if (existing != null) {
@@ -42,9 +44,9 @@ public class UserServiceImpl implements UserService {
         }
 
         // 如果传了手机号，检查手机号是否已存在
-        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+        if (phone != null) {
             LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(User::getPhone, request.getPhone());
+            wrapper.eq(User::getPhone, phone);
             User phoneUser = userMapper.selectOne(wrapper);
             if (phoneUser != null) {
                 throw new BadRequestException("手机号已被注册");
@@ -54,7 +56,7 @@ public class UserServiceImpl implements UserService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setPhone(request.getPhone());
+        user.setPhone(phone);
         user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
 
         try {
@@ -63,7 +65,7 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("用户名或手机号已被注册");
         }
 
-        log.info("新用户注册: userId={}, username={}", user.getId(), user.getUsername());
+        log.info("新用户注册: userId={}", user.getId());
         return buildLoginResponse(user);
     }
 
@@ -78,7 +80,7 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("用户名或密码错误");
         }
 
-        log.info("用户登录: userId={}, username={}", user.getId(), user.getUsername());
+        log.info("用户登录: userId={}", user.getId());
         return buildLoginResponse(user);
     }
 
@@ -105,5 +107,9 @@ public class UserServiceImpl implements UserService {
         response.setExpireAt(expireAt);
 
         return response;
+    }
+
+    private String normalizeOptionalPhone(String phone) {
+        return phone == null || phone.trim().isEmpty() ? null : phone;
     }
 }

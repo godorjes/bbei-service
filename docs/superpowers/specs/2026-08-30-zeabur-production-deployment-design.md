@@ -95,7 +95,7 @@ Maven 增加与 Spring Boot 2.7 兼容的 Flyway 依赖。`V1__init.sql` 和工�
 
 `logback-spring.xml` 只配置控制台输出，移除文件 appender 和 Windows 路径。生产日志由 Zeabur 收集。
 
-`WebLogAspect` 不再记录参数、返回对象或 Authorization 值。每次请求最多记录 HTTP 方法、路径、状态和耗时；常规请求日志使用 DEBUG，生产 INFO 不输出完整访问明细。
+请求日志由 servlet filter 在请求完成后记录，确保拿到最终响应状态；不记录参数、返回对象或 Authorization 值。每次请求最多记录 HTTP 方法、路径、最终状态和耗时；常规请求日志使用 DEBUG，生产 INFO 不输出完整访问明细。
 
 新增 `GET /healthz`，固定返回 HTTP 200 和最小 JSON 状态。该接口不回显环境变量、数据库地址、版本、主机名或凭据，也不执行会暴露数据库细节的诊断查询。
 

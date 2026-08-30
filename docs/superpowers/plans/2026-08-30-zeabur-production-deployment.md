@@ -274,6 +274,8 @@ git commit -m "refactor: replace Redis with local Caffeine storage"
 
 ### Task 3: Make logging safe for production
 
+> Review correction: the final implementation uses `HttpRequestLoggingFilter` instead of the initially planned controller aspect. The filter logs after the servlet chain completes so `status` is the final HTTP response status, including `@ResponseStatus` and handled-error responses. `HttpRequestLoggingFilterTest` verifies final status and query-parameter redaction.
+
 **Files:**
 - Modify: `src/main/java/com/daiqi/aspect/WebLogAspect.java`
 - Modify: `src/main/resources/logback-spring.xml`
@@ -397,12 +399,17 @@ git commit -m "fix: keep credentials out of production logs"
 
 - [ ] **Step 1: Add Flyway to Maven**
 
-Add `org.flywaydb:flyway-core` without an explicit version so Spring Boot 2.7.18 controls compatibility.
+Add `org.flywaydb:flyway-core` and the matching `org.flywaydb:flyway-mysql` module. Spring Boot 2.7.18 controls the core version; use its inherited `${flyway.version}` for the database module.
 
 ```xml
 <dependency>
   <groupId>org.flywaydb</groupId>
   <artifactId>flyway-core</artifactId>
+</dependency>
+<dependency>
+  <groupId>org.flywaydb</groupId>
+  <artifactId>flyway-mysql</artifactId>
+  <version>${flyway.version}</version>
 </dependency>
 ```
 

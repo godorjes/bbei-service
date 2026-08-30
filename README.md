@@ -128,6 +128,12 @@ POST /api/... -> 现有业务 API
 
    Flyway 会把 V1 记录为基线并继续执行 V2。
 5. 如果旧库已经完整包含 V1 和 V2 的全部表、列、索引及约束，首次启动可显式使用基线版本 `2`。
+
+   ```text
+   SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
+   SPRING_FLYWAY_BASELINE_VERSION=2
+   ```
+
 6. 首次成功后立即移除 `SPRING_FLYWAY_BASELINE_ON_MIGRATE` 和 `SPRING_FLYWAY_BASELINE_VERSION`，重新部署并确认严格校验通过。
 7. 如果旧库结构与 V1/V2 不一致，不要强行基线。先为差异编写新的、可审计的版本迁移并在数据库副本上验证。
 
