@@ -134,6 +134,6 @@ Maven 增加与 Spring Boot 2.7 兼容的 Flyway 依赖。`V1__init.sql` 和工�
 
 README 将说明只需在一个 Zeabur 项目中创建：一个 GitHub 应用服务和一个 MySQL 模板服务。应用服务从仓库根目录构建，不挂载持久化卷；设置 `SPRING_PROFILES_ACTIVE=prod` 并连接 Zeabur 暴露的 `MYSQL_*` 变量。Redis 不再需要。
 
-域名先在 Zeabur 绑定，再在 Cloudflare 建立指向 Zeabur 所给目标的代理 DNS 记录，并使用可验证源站证书的 HTTPS 模式。当前业务 API 没有完整的逐用户授权隔离，即使仓库内已有基础登录代码，私人部署仍应使用 Cloudflare Access 保护整个主机名。
+域名先在 Zeabur 绑定，再在 Cloudflare 建立指向 Zeabur 所给目标的代理 DNS 记录。按 Zeabur 当前公网域名文档，Cloudflare SSL/TLS 模式应使用 `Full`；Zeabur 明确提示其源站证书场景可能无法通过 `Full (strict)` 校验。只有确认源站提供与自定义域名匹配且受信任的有效证书后，才切换为 `Full (strict)`。当前业务 API 没有完整的逐用户授权隔离，即使仓库内已有基础登录代码，私人部署仍应使用 Cloudflare Access 保护整个主机名。
 
 迁移旧平台前必须导出数据库；确认 Zeabur 新服务与数据无误后再下线旧服务。任何销毁旧平台或 MySQL 服务的操作都必须在备份下载并验证后进行。

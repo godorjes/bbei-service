@@ -1,0 +1,43 @@
+# Java / Maven
+/target/
+*.class
+
+# Frontend dependencies and temporary builds
+/frontend/node_modules/
+/frontend/dist-live/
+/frontend/dist/
+/src/main/resources/static/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime output
+/logs/
+*.log
+
+# Local environment and editor state
+.env
+.env.local
+.env.*.local
+.idea/
+.vscode/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Test and debug output
+/test-results/
+/playwright-report/
+/frontend/test-results/
+/frontend/playwright-report/
+/debug-*.png
+/*ui.png
+/test-report-*.md
+/ui-test-report-*.md
+/testcases.csv
+/testcases.md
+/testcases_source.txt
+
+# Local product exploration artifacts
+/product-business-map.html
+/product-business-map-preview.png

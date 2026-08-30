@@ -1,13 +1,25 @@
 spring:
   datasource:
-    url: jdbc:${MYSQL_URL}
-    username: ${MYSQLUSER}
-    password: ${MYSQLPASSWORD}
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8&connectTimeout=10000&socketTimeout=30000
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 10000
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
-  redis:
-    host: ${REDISHOST}
-    port: ${REDISPORT}
-    password: ${REDIS_PASSWORD}
+  flyway:
+    enabled: true
+    validate-on-migrate: true
+    baseline-on-migrate: false
+    connect-retries: 10
 
-  cache:
-    type: redis
+logging:
+  level:
+    root: info
+    com.daiqi: info
+    org.mybatis: warn
+    org.springframework.jdbc: warn

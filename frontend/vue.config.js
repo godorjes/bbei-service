@@ -1,5 +1,5 @@
 module.exports = {
-  outputDir: '../src/main/resources/static',
+  outputDir: 'dist',
   publicPath: '/',
   devServer: {
     port: 5173,

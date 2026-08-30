@@ -1,8 +1,7 @@
 package com.daiqi.aspect;
 
-import java.util.Arrays;
-
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -24,28 +23,24 @@ public class WebLogAspect {
 
     @Around("webLog()")
     public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable {
-        long startTime = System.currentTimeMillis();
+        long startedAt = System.currentTimeMillis();
 
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes == null ? null : attributes.getRequest();
+        HttpServletResponse response = attributes == null ? null : attributes.getResponse();
 
-        log.info("======= 开始请求 =======");
-        if (request != null) {
-            log.info("URL    : {}", request.getRequestURL().toString());
-            log.info("HTTP方法: {}", request.getMethod());
-        } else {
-            log.info("URL    : N/A");
-            log.info("HTTP方法: N/A");
+        try {
+            return joinPoint.proceed();
+        } finally {
+            String method = request == null ? "N/A" : request.getMethod();
+            String path = request == null ? "N/A" : request.getRequestURI();
+            int status = response == null ? 0 : response.getStatus();
+            log.debug("HTTP {} {} status={} handler={} durationMs={}",
+                    method,
+                    path,
+                    status,
+                    joinPoint.getSignature().toShortString(),
+                    System.currentTimeMillis() - startedAt);
         }
-        log.info("类方法  : {}.{}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName());
-        log.info("请求参数: {}", Arrays.toString(joinPoint.getArgs()));
-
-        Object result = joinPoint.proceed();
-
-        log.info("返回结果: {}", result);
-        log.info("执行耗时: {} ms", System.currentTimeMillis() - startTime);
-        log.info("======= 结束请求 =======");
-
-        return result;
     }
 }
