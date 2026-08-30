@@ -1,18 +1,24 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
+  shutdown: graceful
 
 spring:
   application:
     name: bibei-backend
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:file:./data/bibei;MODE=MySQL;AUTO_SERVER=TRUE
-    username: sa
-    password:
+    url: "${BIBEI_DB_URL:jdbc:h2:file:./data/bibei;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE;WRITE_DELAY=0}"
+    username: ${BIBEI_DB_USERNAME:sa}
+    password: ${BIBEI_DB_PASSWORD:}
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
   sql:
     init:
       mode: always
       encoding: UTF-8
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   jackson:
     time-zone: Asia/Shanghai
     default-property-inclusion: non_null
@@ -24,3 +30,7 @@ mybatis:
 logging:
   level:
     com.bibei: info
+
+bibei:
+  cors:
+    allowed-origins: ${BIBEI_CORS_ALLOWED_ORIGINS:}
