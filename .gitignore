@@ -15,6 +15,10 @@ yarn-error.log*
 /logs/
 *.log
 
+# Local orchestration (production uses one Zeabur service, not Compose)
+/docker-compose.yml
+/docker-compose.*.yml
+
 # Local environment and editor state
 .env
 .env.local
